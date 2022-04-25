@@ -13,6 +13,7 @@
 *.ko.*
 *.symvers
 *.order
+a.out
 
 ## LATEX ##
 # File sorgenti
