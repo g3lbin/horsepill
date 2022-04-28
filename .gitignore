@@ -32,3 +32,4 @@ a.out
 *.fdb_latexmk
 
 original/
+test/
