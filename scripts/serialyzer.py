@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-filename = "dnscat"
+filename = "extractor.sh"
 per_line_items = 12
 
 serialyzed_file = ""

