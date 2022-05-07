@@ -1,12 +1,15 @@
 #!/bin/bash
+# This script replaces the 'run-init' binary present in
+# the ramdisk image with the one given as argument
 
 programname=$0
 
 function usage {
-    echo -e "\nUsage: $programname <run-init path>\n"
+    echo -e "\nUsage: $programname <run-init full-path>\n"
     exit 1
 }
 
+# checks if a file is passed as an argument
 if [ $# -eq 0 ]; then
         usage
 elif ! [ -f $1 ]; then

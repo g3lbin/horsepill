@@ -1,4 +1,6 @@
 #!/bin/bash
+# This script allows you to extract the 'run-init' binary from
+# the ramdisk image and place it in the '/lost+found' folder
 
 cd /lost+found
 mkdir tmp2
