@@ -651,4 +651,3 @@ void do_attack()
                 }
         }
 }
-
