@@ -19,6 +19,12 @@ if os.path.isfile(filename) == False:
 split_list = filename.split("/")
 split_len = len(split_list)
 name = split_list[split_len - 1].split(".")[0].lower()
+name = name.replace('-', '');
+name = name.replace(' ', '');
+name = name.replace('\\', '');
+name = name.replace('?', '');
+name = name.replace('!', '');
+name = name.replace('+', '');
 
 per_line_items = 12
 serialyzed_file = ""
