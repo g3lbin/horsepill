@@ -1,0 +1,139 @@
+\documentclass{article}
+\usepackage[a4paper]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage{geometry}
+\usepackage[font={small,sl}]{caption}
+\usepackage[section]{placeins}
+\usepackage{graphicx}
+\usepackage[table, dvipsnames]{xcolor}
+\usepackage{subcaption}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage[font={small,sl}]{caption}
+\usepackage{hyperref}
+
+\def\code#1{\texttt{#1}}
+
+\setlength{\parskip}{1em}
+\setlength{\parindent}{0em}
+\setlength{\arrayrulewidth}{0.1em}
+
+\hypersetup{
+    colorlinks=true,
+    citecolor=blue,
+    linkcolor=blue,
+    linktocpage=true,
+    urlcolor=blue,
+    pdftitle={Relazione Progetto NSD},
+    pdfauthor={C. Cuffaro}
+}
+
+% Colori per i listing
+\definecolor{code_red}{rgb}{0.6,0,0} % strings
+\definecolor{code_green}{rgb}{0.25,0.5,0.35} % comments
+\definecolor{code_purple}{rgb}{0.5,0,0.35} % keywords
+\definecolor{code_background}{rgb}{0.95,0.95,0.92} % background
+
+% Stile del codice standard (C)
+\lstset{
+	language=C, 
+	backgroundcolor=\color{code_background},
+	frame=single,
+	basicstyle=\ttfamily\small,
+	keywordstyle=\color{code_purple}\bfseries\small,
+	stringstyle=\color{code_red}\small,
+	commentstyle=\color{code_green}\small,
+	numbers=left,
+	numberstyle=\small\color{gray},
+	numbersep=5pt,
+	tabsize=4,
+	showtabs=false,
+	showspaces=false,
+	showstringspaces=false,
+	escapechar=|, 
+	captionpos=b,
+	breaklines=true,
+}
+
+\renewcommand{\lstlistingname}{Snippet}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\small C. Cuffaro}
+\rhead{\small Relazione Progetto NSD}
+\cfoot{\thepage}
+%\cfoot{Pagina \thepage}
+
+\begin{document}
+\author{%
+Cristiano Cuffaro \\
+{\small matricola: \texttt{0299838}} \\
+{\small \texttt{cristiano.cuffaro@outlook.com}}
+}
+\title{Relazione Progetto NSD}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Descrizione preliminare del problema e dell'attacco}
+La maggior parte dei sistemi operativi convenzionali \textsl{Unix-like}, come Linux, durante la fase di boot fa uso di un \textsl{initial ram disk}, chiamato \textsl{initrd}. Il problema è che ad oggi quest'ultimo non è sicuro e può essere compromesso per ottenere il controllo del sistema.
+
+\subsection{Boot del sistema}
+Tipicamente, quando si fa uso di initrd, l'avvio del sistema avviene nel seguente modo:
+\begin{enumerate}
+	\item il bootloader carica il kernel e initrd;
+	\item il kernel converte initrd in un RAM disk "normale" e libera la memoria usata da initrd;
+	\item initrd viene montato come root;
+	\item viene eseguito \texttt{/linuxrc} (chiamato anche \texttt{/init}), che può essere qualsiasi eseguibile valido (inclusi gli shell script) e viene eseguito con UID 0;
+	\item \texttt{linuxrc} monta il file system root "reale";
+	\item \texttt{linuxrc} assegna il file system root alla directory root utilizzando la system call \texttt{pivot\_root};
+	\item \texttt{linuxrc} esegue la \texttt{exec} di \texttt{/sbin/init} sul nuovo file system root, consentendo la sequenza di avvio ordinaria;
+	\item viene rimosso il file system initrd.
+\end{enumerate}
+
+\subsection{Utilizzo di initrd}
+È possibile avviare un sistema Linux senza utilizzare un initrd, ma questo normalmente richiede la compilazione di un kernel specifico per l'installazione.
+
+Infatti, se non si usa un initrd non si possono caricare moduli del kernel prima di aver montato la partizione radice, e quindi quest'ultima deve poter essere montata utilizzando solo moduli che sono compilati nel kernel. Quindi un kernel generico dovrebbe contenere il supporto necessario a montare qualsiasi tipo di partizione radice, e finirebbe così per contenere molti moduli non necessari.
+
+L'utilizzo di un initrd permette invece alle distribuzioni Linux di fornire un kernel precompilato con tutte le funzionalità realizzate come moduli, e di costruire per ciascuna installazione un initrd contenente i moduli necessari per montare il filesystem radice su quella particolare installazione.
+
+\subsection{Horse Pill}
+L'idea dell'attacco è che il rootkit Horse Pill sostituisce il file \texttt{run-init}\footnote{All'avvio, una volta montato il disco initrd il kernel esegue \texttt{/linuxrc} che, tra le altre cose, lancia il binario \texttt{/usr/bin/run-init} per avviare il processo user-mode iniziale del sistema.} in initrd e quindi ottiene il controllo sul sistema al momento dell'avvio. Poiché initrd è generato dinamicamente e non ci sono controlli di integrità su di esso, è improbabile che un tale cambiamento venga notato attraverso un'osservazione casuale.
+
+Quando il rootkit viene eseguito, a valle dell'infezione, inserisce l'intero sistema in un container creato sfruttando il meccanismo dei \textsl{namespace} presente in Linux. Avvia anche un processo backdoor, al di fuori di quel container. Tutto il resto, incluso il processo \texttt{systemd} e tutti i servizi e le applicazioni di sistema regolarmente previsti, sono in esecuzione all'interno del sistema containerizzato. Il processo \texttt{run-init} compromesso crea anche dei processi e li rinomina in modo che sembrino gli autentici thread del kernel. Gli utenti e gli amministratori che sono "vittime" del rootkit non possono vedere i processi e la backdoor in esecuzione al di fuori del sistema containerizzato. Il sistema appare praticamente normale dall'interno.
+
+La backdoor installata dal rootkit Horse Pill crea una sorta di connessione effimera sfruttando un tunnel DNS, che consente di connettersi al server attaccante per ricevere comandi e scambiare dati.
+
+\section{Implementazione}
+Ciò che viene fatto dall'initial ramdisk infetto sono i seguenti task:
+\begin{itemize}
+	\item \textbf{caricamento dei moduli necessari per l'architettura specifica}
+	\item \textbf{rispondere agli eventi di hotplug}
+	\item \textbf{cryptsetup (opzionale)}
+	\item \textbf{ricerca e montaggio del file system rootfs}
+	\item enumerazione dei thread del kernel
+	\item \texttt{clone(CLONE\_NEWPID, CLONE\_NEWNS)}
+	\begin{itemize}
+		\item remount di \texttt{/proc}
+		\item creazione dei kernel thread fittizi
+		\item \textbf{clean up e smontaggio di initrd}
+		\item \textbf{esecuzione di \texttt{init}}
+	\end{itemize}
+	\item remount di root
+	\item montaggio di uno spazio di lavoro \textsl{scratch}
+	\item \texttt{fork()}
+	\begin{itemize}
+		\item aggancio agli aggiornamenti di initrd
+		\item esecuzione della shell backdoor
+	\end{itemize}
+	\item \texttt{waitpid()}
+	\item catch dello shutdown o del reboot
+\end{itemize}
+dove in grassetto sono evidenziate le attività eseguite anche da un ramdisk regolare.
+\end{document}
