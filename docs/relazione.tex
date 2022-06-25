@@ -84,12 +84,12 @@ Cristiano Cuffaro \\
 La maggior parte dei sistemi operativi convenzionali \textsl{Unix-like}, come Linux, durante la fase di boot fa uso di un \textsl{initial ram disk}, chiamato \textsl{initrd}. Il problema è che ad oggi quest'ultimo non è sicuro e può essere compromesso per ottenere il controllo del sistema.
 
 \subsection{Boot del sistema}
-Tipicamente, quando si fa uso di initrd, l'avvio del sistema avviene nel seguente modo:
+Tipicamente, quando si fa uso di un initrd, l'avvio del sistema avviene nel seguente modo:
 \begin{enumerate}
-	\item il bootloader carica il kernel e initrd;
-	\item il kernel converte initrd in un RAM disk "normale" e libera la memoria usata da initrd;
-	\item initrd viene montato come root;
-	\item viene eseguito \texttt{/linuxrc} (chiamato anche \texttt{/init}), che può essere qualsiasi eseguibile valido (inclusi gli shell script) e viene eseguito con UID 0;
+	\item il bootloader carica il kernel e l'initrd;
+	\item il kernel converte l'initrd in un RAM disk "normale" e libera la memoria utilizzata dal precedente;
+	\item l'initrd viene montato come root;
+	\item con UID 0 viene eseguito \texttt{/linuxrc} (chiamato anche \texttt{/init}), che può essere qualsiasi eseguibile valido (inclusi gli shell script);
 	\item \texttt{linuxrc} monta il file system root "reale";
 	\item \texttt{linuxrc} assegna il file system root alla directory root utilizzando la system call \texttt{pivot\_root};
 	\item \texttt{linuxrc} esegue la \texttt{exec} di \texttt{/sbin/init} sul nuovo file system root, consentendo la sequenza di avvio ordinaria;
@@ -99,14 +99,14 @@ Tipicamente, quando si fa uso di initrd, l'avvio del sistema avviene nel seguent
 \subsection{Utilizzo di initrd}
 È possibile avviare un sistema Linux senza utilizzare un initrd, ma questo normalmente richiede la compilazione di un kernel specifico per l'installazione.
 
-Infatti, se non si usa un initrd non si possono caricare moduli del kernel prima di aver montato la partizione radice, e quindi quest'ultima deve poter essere montata utilizzando solo moduli che sono compilati nel kernel. Quindi un kernel generico dovrebbe contenere il supporto necessario a montare qualsiasi tipo di partizione radice, e finirebbe così per contenere molti moduli non necessari.
+Infatti, se non si usa un initrd non si possono caricare moduli del kernel prima di aver montato la partizione radice, e quindi quest'ultima deve poter essere montata utilizzando solo moduli che sono compilati nel kernel. Per cui, un kernel generico dovrebbe contenere il supporto necessario a montare qualsiasi tipo di partizione radice, e finirebbe così per contenere molti moduli non necessari.
 
 L'utilizzo di un initrd permette invece alle distribuzioni Linux di fornire un kernel precompilato con tutte le funzionalità realizzate come moduli, e di costruire per ciascuna installazione un initrd contenente i moduli necessari per montare il filesystem radice su quella particolare installazione.
 
 \subsection{Horse Pill}
-L'idea dell'attacco è che il rootkit Horse Pill sostituisce il file \texttt{run-init}\footnote{All'avvio, una volta montato il disco initrd il kernel esegue \texttt{/linuxrc} che, tra le altre cose, lancia il binario \texttt{/usr/bin/run-init} per avviare il processo user-mode iniziale del sistema.} in initrd e quindi ottiene il controllo sul sistema al momento dell'avvio. Poiché initrd è generato dinamicamente e non ci sono controlli di integrità su di esso, è improbabile che un tale cambiamento venga notato attraverso un'osservazione casuale.
+L'idea dell'attacco è che il rootkit Horse Pill sostituisce il file \texttt{run-init}\footnote{All'avvio, una volta montato il disco initrd il kernel esegue \texttt{/linuxrc} che, tra le altre cose, lancia il binario \texttt{/usr/bin/run-init} per avviare il processo user-mode iniziale del sistema.} nell'initrd e quindi ottiene il controllo sul sistema al momento dell'avvio. Poiché l'initrd è generato dinamicamente e non ci sono controlli di integrità su di esso, è improbabile che un tale cambiamento venga notato attraverso un'osservazione casuale.
 
-Quando il rootkit viene eseguito, a valle dell'infezione, inserisce l'intero sistema in un container creato sfruttando il meccanismo dei \textsl{namespace} presente in Linux. Avvia anche un processo backdoor, al di fuori di quel container. Tutto il resto, incluso il processo \texttt{systemd} e tutti i servizi e le applicazioni di sistema regolarmente previsti, sono in esecuzione all'interno del sistema containerizzato. Il processo \texttt{run-init} compromesso crea anche dei processi e li rinomina in modo che sembrino gli autentici thread del kernel. Gli utenti e gli amministratori che sono "vittime" del rootkit non possono vedere i processi e la backdoor in esecuzione al di fuori del sistema containerizzato. Il sistema appare praticamente normale dall'interno.
+Quando il rootkit viene eseguito, a valle dell'infezione, inserisce l'intero sistema in un container creato sfruttando il meccanismo dei \textsl{namespace} presente in Linux; avvia anche un processo backdoor al di fuori di quel container. Tutto il resto, incluso il processo \texttt{systemd} e tutti i servizi e le applicazioni di sistema regolarmente previsti, sono in esecuzione all'interno del sistema containerizzato. Il processo \texttt{run-init} compromesso crea anche dei processi e li rinomina in modo che sembrino gli autentici thread del kernel. Gli utenti e gli amministratori che sono vittime del rootkit non possono vedere i processi e la backdoor in esecuzione al di fuori del sistema containerizzato, quindi dall'interno può apparire come un sistema regolare.
 
 La backdoor installata dal rootkit Horse Pill crea una sorta di connessione effimera sfruttando un tunnel DNS, che consente di connettersi al server attaccante per ricevere comandi e scambiare dati.
 
@@ -122,18 +122,50 @@ Ciò che viene fatto dall'initial ramdisk infetto sono i seguenti task:
 	\begin{itemize}
 		\item remount di \texttt{/proc}
 		\item creazione dei kernel thread fittizi
-		\item \textbf{clean up e smontaggio di initrd}
+		\item \textbf{clean up e smontaggio dell'initrd}
 		\item \textbf{esecuzione di \texttt{init}}
 	\end{itemize}
 	\item remount di root
 	\item montaggio di uno spazio di lavoro \textsl{scratch}
 	\item \texttt{fork()}
 	\begin{itemize}
-		\item aggancio agli aggiornamenti di initrd
+		\item aggancio agli aggiornamenti dell'initrd
 		\item esecuzione della shell backdoor
 	\end{itemize}
 	\item \texttt{waitpid()}
 	\item catch dello shutdown o del reboot
 \end{itemize}
 dove in grassetto sono evidenziate le attività eseguite anche da un ramdisk regolare.
+
+\subsection{Realizzazione del sistema containerizzato}
+Per la realizzazione del sistema containerizzato, all'interno della funzione principale dell'attacco (\texttt{do\_attack()}), la cui invocazione è iniettata nel programma infetto \texttt{runinitlib}, è utilizzata la system call \texttt{clone()}, specificando i seguenti flag:
+\begin{itemize}
+	\item \texttt{CLONE\_NEWPID} per creare il processo in un nuovo PID namespace;
+	\item \texttt{CLONE\_NEWNS} per creare il processo in un nuovo mount namespace, inizializzato con una copia del namespace del parent;
+	\item \texttt{SIGCHLD} per segnalare il parent dell'eventuale terminazione del nuovo processo.
+\end{itemize}
+Al ritorno dall'invocazione, il processo child svolge il seguente lavoro:
+\begin{enumerate}
+	\item enumera i thread del kernel accedendo ai file \texttt{/proc/[PID]/stats};
+	\item esegue il montaggio di \texttt{/proc} per perdere le informazioni sui processi in esecuzione al di fuori del nuovo namespace;
+	\item esegue la creazione dei kernel thread fittizi\footnote{I processi creati eseguono \texttt{pause()} in un ciclo senza fine.} bloccando tutti i possibili segnali che possono ricevere, ad eccezione di \texttt{SIGTERM}\footnote{Il segnale \texttt{SIGTERM} deve continuare ad essere ricevibile perché è inviato da INIT quando il sistema deve andare in shutdown.}, per cercare di mascherare il più possibile la reale natura di tali processi;
+	\item esce dalla funzione proseguendo il lavoro regolarmente previsto da \texttt{runinitlib}, i.e. spawn di INIT.
+\end{enumerate}
+In questo modo, il sistema può proseguire con il normale avvio e senza mostrare evidenze forti sulla containerizzazione realizzata.
+
+\subsection{Orchestrazione esterna al sistema containerizzato}
+Dopo l'esecuzione della \texttt{clone()}, il processo parent svolge in background il seguente lavoro:
+\begin{enumerate}
+	\item installa un gestore di segnale per \texttt{SIGINT} che esegue solamente la consegna di tale segnale al processo child;
+	\item disabilita la possibilità di riavviare il sistema utilizzando la sequenza CAD (\textsl{ctrl-alt-delete});
+	\item esegue il \textsl{remount} della radice del file system (\texttt{"/"}) per renderla scrivibile;
+	\item monta un file system di tipo \texttt{tmpfs} su \texttt{"/lost+found"} da utilizzare come \textsl{scratch space} in cui mantenere:
+	\begin{itemize}
+		\item lo script \texttt{extractor.sh} che estrae il binario \texttt{run-init} infetto dall'initrd (utile per eseguire in maniera rapida future infezioni);
+		\item il binario \texttt{dnscat}, corrispondente al client per ottenere una backdoor shell;
+		\item lo script \texttt{infect.sh} che esegue in maniera automatica l'infezione dell'initrd;
+	\end{itemize}
+
+\end{enumerate}
+
 \end{document}
