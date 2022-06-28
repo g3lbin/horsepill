@@ -105,7 +105,7 @@ Tipicamente, quando si fa uso di un initrd, l'avvio del sistema avviene nel segu
 	\item \texttt{linuxrc} monta il file system root "reale";
 	\item \texttt{linuxrc} assegna il file system root alla directory root utilizzando la system call \texttt{pivot\_root};
 	\item \texttt{linuxrc} esegue la \texttt{exec} di \texttt{/sbin/init} sul nuovo file system root, consentendo la sequenza di avvio ordinaria;
-	\item viene rimosso il file system initrd.
+	\item viene rimosso il file system initrd \cite{initrd}.
 \end{enumerate}
 
 \subsection{Utilizzo di initrd}
@@ -113,7 +113,7 @@ Tipicamente, quando si fa uso di un initrd, l'avvio del sistema avviene nel segu
 
 Infatti, se non si usa un initrd non si possono caricare moduli del kernel prima di aver montato la partizione radice, e quindi quest'ultima deve poter essere montata utilizzando solo moduli che sono compilati nel kernel. Per cui, un kernel generico dovrebbe contenere il supporto necessario a montare qualsiasi tipo di partizione radice, e finirebbe così per contenere molti moduli non necessari.
 
-L'utilizzo di un initrd permette invece alle distribuzioni Linux di fornire un kernel precompilato con tutte le funzionalità realizzate come moduli, e di costruire per ciascuna installazione un initrd contenente i moduli necessari per montare il filesystem radice su quella particolare installazione.
+L'utilizzo di un initrd permette invece alle distribuzioni Linux di fornire un kernel precompilato con tutte le funzionalità realizzate come moduli, e di costruire per ciascuna installazione un initrd contenente i moduli necessari per montare il filesystem radice su quella particolare installazione \cite{initrd}.
 
 \subsection{Horse Pill}
 L'idea dell'attacco è che il rootkit Horse Pill sostituisce il file \texttt{run-init}\footnote{All'avvio, una volta montato il disco initrd il kernel esegue \texttt{/linuxrc} che, tra le altre cose, lancia il binario \texttt{/usr/bin/run-init} per avviare il processo user-mode iniziale del sistema.} nell'initrd e quindi ottiene il controllo sul sistema al momento dell'avvio. Poiché l'initrd è generato dinamicamente e non ci sono controlli di integrità su di esso, è improbabile che un tale cambiamento venga notato attraverso un'osservazione casuale.
@@ -161,7 +161,7 @@ Al ritorno dall'invocazione, il processo child svolge il seguente lavoro:
 \begin{enumerate}
 	\item enumera i thread del kernel accedendo ai file \texttt{/proc/[PID]/stats};
 	\item esegue il \textsl{remount} di \texttt{/proc} per perdere le informazioni sui processi in esecuzione al di fuori del nuovo namespace;
-	\item esegue la creazione dei kernel thread fittizi\footnote{I processi creati eseguono \texttt{pause()} in un ciclo senza fine.} bloccando tutti i possibili segnali che possono ricevere, ad eccezione di \texttt{SIGTERM}\footnote{Il segnale \texttt{SIGTERM} deve continuare ad essere ricevibile perché è inviato da \textsl{init} a tutti i suoi child quando il sistema deve andare in shutdown.}, per cercare di mascherare il più possibile la reale natura di tali processi;
+	\item esegue la creazione dei kernel thread fittizi\footnote{I processi creati eseguono \texttt{pause()} in un ciclo senza fine.} bloccando tutti i possibili segnali che possono ricevere, ad eccezione di \texttt{SIGTERM}\footnote{Il segnale \texttt{SIGTERM} deve continuare ad essere ricevibile perché è inviato da \textsl{init} a tutti i suoi child quando il sistema deve andare in shutdown \cite{deamons-shutdown}.}, per cercare di mascherare il più possibile la reale natura di tali processi;
 	\item esce dalla funzione proseguendo il lavoro regolarmente previsto da \texttt{runinitlib}, i.e. spawn di \textsl{init}.
 \end{enumerate}
 In questo modo, il sistema può proseguire con il normale avvio e senza mostrare evidenze forti sulla containerizzazione realizzata.
@@ -170,7 +170,7 @@ In questo modo, il sistema può proseguire con il normale avvio e senza mostrare
 Dopo l'esecuzione della \texttt{clone()}, il processo parent svolge in background il seguente lavoro:
 \begin{enumerate}
 	\item installa un gestore di segnale per \texttt{SIGINT} che esegue solamente la consegna di tale segnale al processo child;
-	\item disabilita la possibilità di riavviare il sistema utilizzando la sequenza CAD (\textsl{ctrl-alt-delete});
+	\item disabilita la possibilità di riavviare il sistema utilizzando la sequenza CAD (\textsl{ctrl-alt-delete}), in modo tale che essa causi solamente l'invio del segnale \texttt{SIGINT} al processo \textsl{init};
 	\item esegue il \textsl{remount} della radice del file system (\texttt{"/"}) per renderla scrivibile;
 	\item monta un file system di tipo \texttt{tmpfs} su \texttt{"/lost+found"} da utilizzare come \textsl{scratch space} in cui mantenere:
 	\begin{itemize}
@@ -193,12 +193,12 @@ La terminazione del client \textsl{dnscat} e del \textsl{watcher} è gestita lan
 	Il motivo è che l'esecuzione di \texttt{reboot} o \texttt{poweroff} all'interno di un PID namespace diverso da quello iniziale, ha l'effetto di inviare un segnale al processo \textsl{init} di tale namespace:
 	\begin{itemize}
 		\item \texttt{SIGHUP} per riavviare il sistema,
-		\item \texttt{SIGINT} per spegnere il sistema.
+		\item \texttt{SIGINT} per spegnere il sistema \cite{man reboot}.
 	\end{itemize}
 \end{itemize}
 
 \subsection{Backdoor shell}
-Per ottenere il controllo del sistema da un server remoto, è stato utilizzato il tool \textsl{dnscat2} \footnote{\url{https://github.com/iagox86/dnscat2}} che implementa un tunnel DNS.
+Per ottenere il controllo del sistema da un server remoto, è stato utilizzato il tool \textsl{dnscat2} \cite{dnscat2} che implementa un tunnel DNS.
 
 Eseguendo in background il binario \texttt{dnscat}, si tenta di stabilire una trasmissione di dati tra la macchina vittima e quella attaccante, creando un canale criptato \textsl{C\&C} (\textsl{command-and-control}) al di sopra del protocollo DNS.
 
@@ -208,5 +208,60 @@ L'uso del DNS tunneling è particolarmente vantaggioso per l'esfiltrazione dei d
 Per evitare che gli aggiornamenti del kernel portino alla ricostruzione di un initrd regolare, viene lanciato in background un processo che sfrutta l'API \texttt{inotify} per monitorare gli eventi del file system che coinvolgono la directory \texttt{/boot}.
 
 Con questo meccanismo è possibile intercettare ogni operazione di creazione o rinomina dei file all'interno della directory osservata e, in caso di modifica dell'initrd, intervenire eseguendo lo script \texttt{infect.sh} per iniettare nuovamente il binario \texttt{run-init} infetto all'interno dell'initial ramdisk.
+
+\section{Rilevamento e prevenzione}
+Il sistema containerizzato è realizzato facendo uso del meccanismo dei \textsl{namespace}, ovvero creando tutti i processi utente all'interno di nuovi PID e mount namespace. Esistono diversi modi per distinguere il sistema containerizzato da quello regolare e alcuni di questi sono descritti di seguito.
+
+\begin{itemize}
+	\item Per ogni processo in Linux esiste la directory \texttt{/proc/[pid]/ns/} contenente un link simbolico per ciascun namespace, che riporta il tipo di namespace e l'\textsl{inode number} associato \cite{man namespaces}. Eseguendo il comando \texttt{ls -l /proc/1/ns/} è possibile osservare:
+	\begin{itemize}
+		\item al di fuori del sistema containerizzato
+		\begin{center}
+			{\ttfamily
+				\begin{tabular}{l}
+					mnt -> mnt:[4026531840] \\
+					pid -> pid:[4026531836] \\
+					pid\_for\_children -> pid:[4026531836]
+				\end{tabular}
+			}
+		\end{center}
+		
+		\item all'interno del sistema containerizzato
+		\begin{center}
+			{\ttfamily
+				\begin{tabular}{l}
+					mnt -> mnt:[4026532165] \\
+					pid -> pid:[4026532166] \\
+					pid\_for\_children -> pid:[4026532166]
+				\end{tabular}
+			}
+		\end{center}
+	\end{itemize}
+	ovviamente i link simbolici riferiti agli altri namespace non differiscono.
+	
+	\item In un sistema regolare il demone \texttt{kthreadd}, avente PID \texttt{2}, ha \texttt{0} come PPID (\textsl{Parent PID}), ma in quello containerizzato esso è un processo fittizio creato da \textsl{init} e quindi eseguendo \texttt{cat /proc/2/status | grep PPid} si ottiene che il PPID corrisponde a \texttt{1}.
+	
+	\item In un sistema regolare inviare segnali da terminale ai demoni del kernel non produce alcun effetto apparente (e.g. inviando i segnali tramite \texttt{top} non si verificano cambiamenti di stato), mentre nel sistema containerizzato i segnali non bloccabili (i.e. \texttt{SIGKILL} e \texttt{SIGSTOP}) hanno effetto sui thread del kernel fittizi.
+\end{itemize}
+
+Quando vengono eseguiti gli aggiornamenti del kernel è necessario anche ricostruire il ram disk, perché nuove versioni del kernel richiedono nuove versioni del ram disk. Si possono avere script compromessi sul disco che vanno ad intercettare questi aggiornamenti (e.g. per Ubuntu è possibile riporli nella directory \texttt{/etc/initramfs/post-update.d}) ed è difficile rilevare queste minacce in maniera automatica. Una possibile soluzione potrebbe essere quella di verificare in maniera crittografica gli aggiornamenti, facendo sì che iniezioni di eseguibili infetti (come nell'Horse Pill) siano rilevabili al momento della verifica.
+
+\begin{thebibliography}{9}
+	\bibitem{initrd}
+	{\sc Using the initial RAM disk (initrd),}
+	\url{https://www.kernel.org/doc/html/latest/admin-guide/initrd.html}
+	\bibitem{deamons-shutdown}
+	{\sc M. Kerrisk,}
+	``The Linux Programming Interface, sezione 37.3: Guidelines for Writing Daemons'', 2010
+	\bibitem{man reboot}
+	{\sc reboot(2) - Linux manual page,}
+	DESCRIPTION: ``Behavior inside PID namespaces''
+	\bibitem{dnscat2}
+	{\sc Ron Bowes (a.k.a. iagox86),}
+	``dnscat2'', \url{https://github.com/iagox86/dnscat2}
+	\bibitem{man namespaces}
+	{\sc namespaces(7) - Linux manual page,}
+	DESCRIPTION: ``The /proc/[pid]/ns/ directory''
+\end{thebibliography}
 
 \end{document}
